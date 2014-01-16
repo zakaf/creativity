@@ -20,18 +20,22 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-
 import json
 import urllib
 
-query = raw_input("Type query string.")
+#name = raw_input("Type name of the person\n")
 api_key = open(".api_key").read()
-service_url = 'https://www.googleapis.com/freebase/v1/search'
+service_url = 'https://www.googleapis.com/freebase/v1/mqlread'
+#query = [{'id': "/en/chris_brown", 'name':None, 'type': '/people/person'}]
+query = [{'type': '/type/property', "schema": { 'id': '/music/artist' }, 'id': None, 'name': None}]
 params = {
-        'query': query,
+        'query': json.dumps(query),
         'key': api_key
 }
 url = service_url + '?' + urllib.urlencode(params)
 response = json.loads(urllib.urlopen(url).read())
-for result in response['result']:
-    print result['name'] + ' (' + str(result['score']) + ')'
+try:
+	for planet in response['result']:
+  		print planet['name']
+except KeyError:
+	print response
