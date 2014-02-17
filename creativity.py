@@ -20,22 +20,46 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
-import json
-import urllib
+from suds.client import Client
 
-#name = raw_input("Type name of the person\n")
-api_key = open(".api_key").read()
-service_url = 'https://www.googleapis.com/freebase/v1/mqlread'
-#query = [{'id': "/en/chris_brown", 'name':None, 'type': '/people/person'}]
-query = [{'type': '/type/property', "schema": { 'id': '/music/artist' }, 'id': None, 'name': None}]
-params = {
-        'query': json.dumps(query),
-        'key': api_key
+authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
+queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
+
+authenticateClient = Client(authenticateUrl)
+SID = authenticateClient.service.authenticate()
+print SID
+queryClient = Client(queryUrl)
+queryParameters = queryClient.factory.create('queryParameters')
+queryParameters.databaseId = 'WOS'
+queryParameters.userQuery = 'TS=(cadmium OR lead)'
+queryParameters.queryLanguage = 'en'
+editions = {
+	'collection':'WOS',
+	'edition':'SCI',
 }
-url = service_url + '?' + urllib.urlencode(params)
-response = json.loads(urllib.urlopen(url).read())
-try:
-	for planet in response['result']:
-  		print planet['name']
-except KeyError:
-	print response
+queryParameters.editions = [editions,]
+timeSpan = {
+	'begin':'2000-01-01',
+	'end':'2013-12-31',
+}
+queryParameters.timeSpan = [timeSpan,]
+
+
+retrieveParameters = queryClient.factory.create('retrieveParameters')
+retrieveParameters.firstRecord=1
+retrieveParameters.count=5
+option = {
+	'key':'RecordIDs',
+	'value':'On',
+}
+retrieveParameters.option=[option,]
+
+
+queryClient.set_options(headers={'Cookie':SID})
+search_result = queryClient.service.search(queryParameters,retrieveParameters)
+result = authenticateClient.service.closeSession()
+print result
+
+
+
+
