@@ -1,23 +1,25 @@
-Creativity Web Project Developement
+Creativity Web Project (under development)
 ==========
 
 Creativity Web targets to develop a network of creative scientists in different areas
 
 Requirement
 ----------
-SUDS - python library for SOAP (access to web of science)
-	* In order to install SUDS, you need python-setuptools installed,
-		sudo apt-get install python-setuptools
-	* Download 0.4GA version from [suds](http://fedorahosted.org/suds/)
-	* tar -xzvf "file-name.tar.gz" (remove quotation mark and replace it with actual name)
-	* cd "directory with untarred content" (remove quotation mark and replace it with actual name)
-	* sudo python setup.py install
+SUDS - python library for SOAP
+* In order to use SUDS, you need python-setuptools installed (<code>sudo apt-get install python-setuptools</code>)
+* Download 0.4GA version from [SUDS](http://fedorahosted.org/suds/)
+* <code>cd "directory with downloaded file"</code> (remove quotation mark and replace it with actual name)
+* <code>tar -xzvf "file-name.tar.gz"</code> (remove quotation mark and replace it with actual name)
+* <code>cd "directory with untarred content"</code> (remove quotation mark and replace it with actual name)
+* <code>sudo python setup.py install</code>
 
 For ease of use, create a command that will run creativity.py
-	* To make this command available to all users:
-		sudo ln -s $PWD/creativity.py /usr/local/bin/creativity
-	* To make this command available only to current user (if you have ~/bin in your path):
-		ln -s $PWD/creativity.py ~/bin/creativity
+* To make this command available to all users:
+
+    <code>sudo ln -s $PWD/creativity.py /usr/local/bin/creativity</code>
+* To make this command available only to current user (if you have ~/bin in your path):
+
+    <code>ln -s $PWD/creativity.py ~/bin/creativity</code>
 
 Temporary
 BeautifulSoup
@@ -27,16 +29,16 @@ BeautifulSoup
 Goal
 ----------
 Feb 14, 2014 ~
+
 Summary: 
-	input one scientist and return 5 scientists that has been co-cited with him in a scientific paper
+* input one scientist and return 5 scientists that has been co-cited with him in a scientific paper
+
 Steps:
-	1. Input one scientist and get one most highly cited work of his
-	2. Get 5 works that have cited the above work (the most highly cited works)
-	3. Get a most higly cited work that the above work has cited for all 5 works 
-		(other than the work from input scientist)
-	4. choose one author of the work that has been chosen in for all 5 works.
-		(author with highest h-index score)
-	5. output 5 authors and their work that previous step chooses
+* Input one scientist and get one most highly cited work of his
+* Get 5 works that have cited the above work (the most highly cited works)
+* Get a most higly cited work that the above work has cited for all 5 works (other than the work from input scientist)
+* choose one author of the work that has been chosen in for all 5 works.(author with highest h-index score)
+* output 5 authors and their work that previous step chooses
 
 
 Progress
