@@ -21,23 +21,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from suds.client import Client
+#from bs4 import BeautifulSoup
 import logging
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.client').setLevel(logging.NOTSET)
 
-#input parameters for search
+#input parameters for first search
 #queryParameters (#1 input)
 databaseId = 'WOS'
-query = 'TS=(cadmium OR lead)'
+query = 'AU=Chomczynski, P'
 editions = {
 	'collection':'WOS',
 	'edition':'SCI',
 }
 sTimeSpan = None
 timeSpan = {
-	'begin':'2000-01-01',
+	'begin':'1980-01-01',
 	'end':'2013-12-31',
 }
 language = 'en'
@@ -46,10 +47,13 @@ queryParameters = { 'databaseId': databaseId, 'userQuery': query, 'editions': [e
 
 #retrieveParameters (#2 input)
 firstRecord = 1
-count = 5
-sortField = None
+count = 2
+sortField = {
+	'name':'TC',
+	'sort':'D'
+}
 viewField = None
-option = {
+option = { 
 	'key':'RecordIDs',
 	'value':'On',
 }
@@ -60,16 +64,37 @@ retrieveParameters = { 	'firstRecord': firstRecord, 'count': count, 'sortField':
 authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
 queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
 
+#creating suds clients and retrieving session id
+authenticateClient = Client(authenticateUrl)
+queryClient = Client(queryUrl)
 try:
-	#creating suds clients and retrieving session id
-	authenticateClient = Client(authenticateUrl)
-	queryClient = Client(queryUrl)
 	#getting session id through authentication
 	SID = authenticateClient.service.authenticate()
-	#setting session id to the header of the search request
-	queryClient.set_options(headers={'Cookie':"SID=\""+SID+"\""})
+except WebFault, e:
+	print e
+
+#setting session id to the header of the search request
+queryClient.set_options(headers={'Cookie':"SID=\""+SID+"\""})
+try:
 	search_result = queryClient.service.search(queryParameters,retrieveParameters)
-	#print search_result
+except WebFault, e:
+	print e
+
+#print search_result
+#search_result is a complex structure
+#queryId, recordsFound, recordsSearched
+#optionValue (contains option value specified in input parameter)
+
+#records (actual records)
+#soup = BeautifulSoup(search_result.records)
+#print(soup.prettify())
+
+# record id of the work with the most number of citations
+highly_cited_rid = search_result.optionValue[0].value[0]
+print search_result.optionValue[0].value[0]
+
+
+try:
 	authenticateClient.service.closeSession()
 except WebFault, e:
 	print e

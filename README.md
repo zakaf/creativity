@@ -19,6 +19,10 @@ For ease of use, create a command that will run creativity.py
 	* To make this command available only to current user (if you have ~/bin in your path):
 		ln -s $PWD/creativity.py ~/bin/creativity
 
+Temporary
+BeautifulSoup
+<code>sudo easy_install beautifulsoup4</code>
+
 
 Goal
 ----------
@@ -46,9 +50,11 @@ Feb 18, 2014
 * Attached session id to the header of search request
 * Input parameters for search request has been made
 * search request can now be made, but response has to be formatted
+* First search returns the single work with the most number of citations (currently author hardcoded as Chomczynski, P)
 
 Contact
 ----------
 * For bugs or feature requests please create a [creativity github issue](https://github.com/ldkz2524/creativity/issues).
+* Contact Dongkeun Lee (ldkz2524@ucla.edu)
 
 
