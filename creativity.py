@@ -21,44 +21,58 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from suds.client import Client
+import logging
 
-authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
-queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
+#setting debugging output level
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('suds.client').setLevel(logging.NOTSET)
 
-authenticateClient = Client(authenticateUrl)
-SID = authenticateClient.service.authenticate()
-print SID
-queryClient = Client(queryUrl)
-queryParameters = queryClient.factory.create('queryParameters')
-queryParameters.databaseId = 'WOS'
-queryParameters.userQuery = 'TS=(cadmium OR lead)'
-queryParameters.queryLanguage = 'en'
+#input parameters for search
+#queryParameters (#1 input)
+databaseId = 'WOS'
+query = 'TS=(cadmium OR lead)'
 editions = {
 	'collection':'WOS',
 	'edition':'SCI',
 }
-queryParameters.editions = [editions,]
+sTimeSpan = None
 timeSpan = {
 	'begin':'2000-01-01',
 	'end':'2013-12-31',
 }
-queryParameters.timeSpan = [timeSpan,]
+language = 'en'
+queryParameters = { 'databaseId': databaseId, 'userQuery': query, 'editions': [editions,],
+					'symbolicTimeSpan': sTimeSpan, 'timeSpan':[timeSpan,], 'queryLanguage':language, }
 
-
-retrieveParameters = queryClient.factory.create('retrieveParameters')
-retrieveParameters.firstRecord=1
-retrieveParameters.count=5
+#retrieveParameters (#2 input)
+firstRecord = 1
+count = 5
+sortField = None
+viewField = None
 option = {
 	'key':'RecordIDs',
 	'value':'On',
 }
-retrieveParameters.option=[option,]
+retrieveParameters = { 	'firstRecord': firstRecord, 'count': count, 'sortField': sortField,
+						'viewField': viewField, 'option': [option,], }
 
+#url of wsdl files of web of science
+authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
+queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
 
-queryClient.set_options(headers={'Cookie':SID})
-search_result = queryClient.service.search(queryParameters,retrieveParameters)
-result = authenticateClient.service.closeSession()
-print result
+try:
+	#creating suds clients and retrieving session id
+	authenticateClient = Client(authenticateUrl)
+	queryClient = Client(queryUrl)
+	#getting session id through authentication
+	SID = authenticateClient.service.authenticate()
+	#setting session id to the header of the search request
+	queryClient.set_options(headers={'Cookie':"SID=\""+SID+"\""})
+	search_result = queryClient.service.search(queryParameters,retrieveParameters)
+	#print search_result
+	authenticateClient.service.closeSession()
+except WebFault, e:
+	print e
 
 
 
