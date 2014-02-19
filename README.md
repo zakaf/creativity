@@ -5,6 +5,10 @@ Creativity Web targets to develop a network of creative scientists in different 
 
 Requirement
 ----------
+Ip address has to be registered at the web of science server and granted accessed to their premium service, not lite service
+* server will not grant an authentication, if not registered
+* If your computer is connrected to UCLA network or UCLA VPN, it has already been pre-registered
+
 SUDS - python library for SOAP
 * In order to use SUDS, you need python-setuptools installed (<code>sudo apt-get install python-setuptools</code>)
 * Download 0.4GA version from [SUDS](http://fedorahosted.org/suds/)
@@ -20,11 +24,6 @@ For ease of use, create a command that will run creativity.py
 * To make this command available only to current user (if you have ~/bin in your path):
 
     <code>ln -s $PWD/creativity.py ~/bin/creativity</code>
-
-Temporary
-BeautifulSoup
-<code>sudo easy_install beautifulsoup4</code>
-
 
 Goal
 ----------
@@ -54,10 +53,13 @@ Feb 18, 2014
 * search request can now be made, but response has to be formatted
 * First search returns the single work with the most number of citations (currently author hardcoded as Chomczynski, P)
 * citingArticels receive input from previous search result and returns 5 works that cited the work returned by previous function
+* made code cleaner and more objected-oriented like by creating 'Authenticate' and 'Query' class.
+* as of now, program prints session id, most highly cited work of Chomczynski, P, 5 most highly cited works that cites the previous work of Chomczynski, P
 
 Known Bugs
 ----------
-* When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
+* (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
+* There is a need for me to look into the request limit set by the server. With that i can halt the program for few seconds or minutes, before server stops responding to me for few minutes. Intentionally halting the program for certain time frame would be better than server initiated forceful halt (need to get another session id and other unknown issues).
 
 Contact
 ----------

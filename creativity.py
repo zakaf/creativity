@@ -21,8 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 from suds.client import Client
-#from bs4 import BeautifulSoup
+import suds
 import logging
+import sys
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
@@ -32,93 +33,106 @@ logging.getLogger('suds.client').setLevel(logging.NOTSET)
 authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
 queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
 
+#class for authenticating and closing session
+class Authenticate (object):
+	def __init__ (self):
+		self.client = Client(authenticateUrl)
+		self.SID = None
+	def authenticateSession (self):
+		try:
+			self.SID = self.client.service.authenticate()
+		except suds.WebFault, e:
+			print e
+			sys.exit()	
+	def closeSession (self):
+		try:
+			self.client.service.closeSession()
+		except suds.WebFault, e:
+			print e
+
+#class for query
+class Query (object):
+	def __init__ (self, SID):
+		self.client = Client(queryUrl)
+		self.client.set_options(headers={'Cookie':"SID=\""+str(SID)+"\""})
+	def search (self, queryParameters, retrieveParameters):
+		try:
+			search_result = self.client.service.search(queryParameters,retrieveParameters)
+		except suds.WebFault, e:
+			print e
+		return search_result
+	def citingArticles (self, queryParameters, uid, retrieveParameters):
+		try:
+			citing_result = self.client.service.citingArticles(
+					queryParameters['databaseId'],
+					uid,
+					queryParameters['editions'],
+					queryParameters['timeSpan'],
+					queryParameters['queryLanguage'],
+					retrieveParameters)
+		except suds.WebFault, e:
+			print e
+		return citing_result
+
+#VARIABLES
+#Author name hard coded for the purpose of programming later to be changed as input
 AuthorName = "Chomczynski, P"
 
-#input parameters for first search
+#instance of Authenticate created and authenticateSession is called
+authentication = Authenticate()
+authentication.authenticateSession()
+print '\n'+"Current Session ID "
+print authentication.SID
+print "-----------"
+
+#instance of Query created
+query = Query(authentication.SID)
+
 #queryParameters (#1 input)
 databaseId = 'WOS'
 query = 'AU='+AuthorName
-editions = {
-	'collection':'WOS',
-	'edition':'SCI',
-}
+editions = { 'collection':'WOS', 'edition':'SCI', }
 sTimeSpan = None
-timeSpan = {
-	'begin':'1980-01-01',
-	'end':'2013-12-31',
-}
+timeSpan = { 'begin':'1980-01-01', 'end':'2013-12-31', }
 language = 'en'
-queryParameters_S = { 'databaseId': databaseId, 'userQuery': query, 'editions': [editions,],
-					'symbolicTimeSpan': sTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }
+queryParameters_S = { 	'databaseId': databaseId, 'userQuery': query, 'editions': [editions,],
+						'symbolicTimeSpan': sTimeSpan, 'timeSpan': [timeSpan,], 
+						'queryLanguage': language, }
 
 #retrieveParameters (#2 input)
 firstRecord = 1
 count = 1
-sortField = {
-	'name':'TC',
-	'sort':'D'
-}
+sortField = { 'name':'TC', 'sort':'D' }
 viewField = None
-option = { 
-	'key':'RecordIDs',
-	'value':'On',
-}
+option = { 'key':'RecordIDs', 'value':'On', }
 retrieveParameters_S = {	'firstRecord': firstRecord, 'count': count, 'sortField': sortField,
 							'viewField': viewField, 'option': [option,], }
 
+#search is called from query
+search_result = query.search(queryParameters_S,retrieveParameters_S)
+rid = search_result.optionValue[0].value[0]
+
+#printing result
+print '\n'+"Most higly cited work of "+AuthorName
+print rid
+print "-----------"
+
 #input parameter for citingArticles
-#citingArticles (input)
-#resetting values to avoid any changes to previous parameters affecting current one
 firstRecord = 1
 count = 5
-
 retrieveParameters_CA = { 'firstRecord': firstRecord, 'count': count, 'sortField': [sortField,],
 							'viewField': viewField, 'option': [option,], }
 
-#creating suds clients and retrieving session id
-authenticateClient = Client(authenticateUrl)
-queryClient = Client(queryUrl)
-try:
-	#getting session id through authentication
-	SID = authenticateClient.service.authenticate()
-except WebFault, e:
-	print e
-print '\n'+"Session ID"
-print SID
-print "___________"
+#citingAriticles is called from query
+citing_result = query.citingArticles(queryParameters_S,rid,retrieveParameters_CA)
+rid_list = citing_result.optionValue[0].value
 
-#setting session id to the header of the search request
-queryClient.set_options(headers={'Cookie':"SID=\""+SID+"\""})
-try:
-	search_result = queryClient.service.search(queryParameters_S,retrieveParameters_S)
-except WebFault, e:
-	print e
-
-#search_result is a complex structure (queryId, recordsFound, recordsSearched,
-#optionValue (contains option value specified in input parameter), records (actual records)
-
-#soup = BeautifulSoup(search_result.records)
-#print(soup.prettify())
-
-# record id of the work with the most number of citations
-highly_cited_rid = search_result.optionValue[0].value[0]
-print '\n'+"Most higly cited work of "+AuthorName
-print highly_cited_rid
-print "-----------"
-
-try:
-	citing_result = queryClient.service.citingArticles(databaseId,highly_cited_rid,[editions,],[timeSpan,],language,retrieveParameters_CA)
-except WebFault, e:
-	print e
+#printing result
 print '\n'+"5 works that cited the most highly cited workd of "+AuthorName+" (in descending order)"
-print citing_result.optionValue[0].value
+print rid_list
 print "----------"
 
-try:
-	authenticateClient.service.closeSession()
-except WebFault, e:
-	print e
-
-
+#closing session before program exits
+authentication.closeSession()
 
 
