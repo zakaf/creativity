@@ -28,10 +28,16 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('suds.client').setLevel(logging.NOTSET)
 
+#url of wsdl files of web of science
+authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
+queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
+
+AuthorName = "Chomczynski, P"
+
 #input parameters for first search
 #queryParameters (#1 input)
 databaseId = 'WOS'
-query = 'AU=Chomczynski, P'
+query = 'AU='+AuthorName
 editions = {
 	'collection':'WOS',
 	'edition':'SCI',
@@ -42,12 +48,12 @@ timeSpan = {
 	'end':'2013-12-31',
 }
 language = 'en'
-queryParameters = { 'databaseId': databaseId, 'userQuery': query, 'editions': [editions,],
-					'symbolicTimeSpan': sTimeSpan, 'timeSpan':[timeSpan,], 'queryLanguage':language, }
+queryParameters_S = { 'databaseId': databaseId, 'userQuery': query, 'editions': [editions,],
+					'symbolicTimeSpan': sTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }
 
 #retrieveParameters (#2 input)
 firstRecord = 1
-count = 2
+count = 1
 sortField = {
 	'name':'TC',
 	'sort':'D'
@@ -57,12 +63,17 @@ option = {
 	'key':'RecordIDs',
 	'value':'On',
 }
-retrieveParameters = { 	'firstRecord': firstRecord, 'count': count, 'sortField': sortField,
-						'viewField': viewField, 'option': [option,], }
+retrieveParameters_S = {	'firstRecord': firstRecord, 'count': count, 'sortField': sortField,
+							'viewField': viewField, 'option': [option,], }
 
-#url of wsdl files of web of science
-authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
-queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
+#input parameter for citingArticles
+#citingArticles (input)
+#resetting values to avoid any changes to previous parameters affecting current one
+firstRecord = 1
+count = 5
+
+retrieveParameters_CA = { 'firstRecord': firstRecord, 'count': count, 'sortField': [sortField,],
+							'viewField': viewField, 'option': [option,], }
 
 #creating suds clients and retrieving session id
 authenticateClient = Client(authenticateUrl)
@@ -72,27 +83,36 @@ try:
 	SID = authenticateClient.service.authenticate()
 except WebFault, e:
 	print e
+print '\n'+"Session ID"
+print SID
+print "___________"
 
 #setting session id to the header of the search request
 queryClient.set_options(headers={'Cookie':"SID=\""+SID+"\""})
 try:
-	search_result = queryClient.service.search(queryParameters,retrieveParameters)
+	search_result = queryClient.service.search(queryParameters_S,retrieveParameters_S)
 except WebFault, e:
 	print e
 
-#print search_result
-#search_result is a complex structure
-#queryId, recordsFound, recordsSearched
-#optionValue (contains option value specified in input parameter)
+#search_result is a complex structure (queryId, recordsFound, recordsSearched,
+#optionValue (contains option value specified in input parameter), records (actual records)
 
-#records (actual records)
 #soup = BeautifulSoup(search_result.records)
 #print(soup.prettify())
 
 # record id of the work with the most number of citations
 highly_cited_rid = search_result.optionValue[0].value[0]
-print search_result.optionValue[0].value[0]
+print '\n'+"Most higly cited work of "+AuthorName
+print highly_cited_rid
+print "-----------"
 
+try:
+	citing_result = queryClient.service.citingArticles(databaseId,highly_cited_rid,[editions,],[timeSpan,],language,retrieveParameters_CA)
+except WebFault, e:
+	print e
+print '\n'+"5 works that cited the most highly cited workd of "+AuthorName+" (in descending order)"
+print citing_result.optionValue[0].value
+print "----------"
 
 try:
 	authenticateClient.service.closeSession()

@@ -53,6 +53,11 @@ Feb 18, 2014
 * Input parameters for search request has been made
 * search request can now be made, but response has to be formatted
 * First search returns the single work with the most number of citations (currently author hardcoded as Chomczynski, P)
+* citingArticels receive input from previous search result and returns 5 works that cited the work returned by previous function
+
+Known Bugs
+----------
+* When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 
 Contact
 ----------
