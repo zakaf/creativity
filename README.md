@@ -5,9 +5,9 @@ Creativity Web targets to develop a network of creative scientists in different 
 
 Requirement
 ----------
-IP address has to be registered at the web of science server and granted accessed to their premium service, not lite service
-* server will not grant an authentication, if not registered
-* If your computer is connrected to UCLA network or UCLA VPN, it has already been pre-registered
+IP address has to be registered at the web of science server and granted access to its premium service, not its lite service
+* If your computer is connected to UCLA network or UCLA VPN, it has already been pre-registered
+* access can be requested through [web of science](http://wokinfo.com/scientific/info/terms-ws/), but its premium service is not guranteed
 
 SUDS - python library for SOAP
 * In order to use SUDS, you need python-setuptools installed (<code>sudo apt-get install python-setuptools</code>)
@@ -17,7 +17,7 @@ SUDS - python library for SOAP
 * <code>cd "directory with untarred content"</code> (remove quotation mark and replace it with actual name)
 * <code>sudo python setup.py install</code>
 
-For ease of use, create a command that will run creativity.py
+For ease of use, create a command, "creativity", that will run creativity.py
 * To make this command available to all users:
 
     <code>sudo ln -s $PWD/creativity.py /usr/local/bin/creativity</code>
