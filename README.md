@@ -5,7 +5,7 @@ Creativity Web targets to develop a network of creative scientists in different 
 
 Requirement
 ----------
-Ip address has to be registered at the web of science server and granted accessed to their premium service, not lite service
+IP address has to be registered at the web of science server and granted accessed to their premium service, not lite service
 * server will not grant an authentication, if not registered
 * If your computer is connrected to UCLA network or UCLA VPN, it has already been pre-registered
 
