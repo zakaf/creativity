@@ -1,0 +1,49 @@
+Service ( WokSearchService ) tns="http://woksearch.v3.wokmws.thomsonreuters.com"
+   Prefixes (1)
+      ns0 = "http://woksearch.v3.wokmws.thomsonreuters.com"
+   Ports (1):
+      (WokSearchPort)
+         Methods (7):
+            citedReferences(xs:string databaseId, xs:string uid, xs:string queryLanguage, retrieveParameters retrieveParameters, )
+            citedReferencesRetrieve(xs:string queryId, retrieveParameters retrieveParameters, )
+            citingArticles(xs:string databaseId, xs:string uid, editionDesc[] editions, timeSpan timeSpan, xs:string queryLanguage, retrieveParameters retrieveParameters, )
+            relatedRecords(xs:string databaseId, xs:string uid, editionDesc[] editions, timeSpan timeSpan, xs:string queryLanguage, retrieveParameters retrieveParameters, )
+            retrieve(xs:string queryId, retrieveParameters retrieveParameters, )
+            retrieveById(xs:string databaseId, xs:string[] uid, xs:string queryLanguage, retrieveParameters retrieveParameters, )
+            search(queryParameters queryParameters, retrieveParameters retrieveParameters, )
+         Types (35):
+            AuthenticationException
+            ESTIWSException
+            FaultInformation
+            InternalServerException
+            InvalidInputException
+            QueryException
+            RawFaultInformation
+            SessionException
+            SupportingWebServiceException
+            citedReference
+            citedReferences
+            citedReferencesResponse
+            citedReferencesRetrieve
+            citedReferencesRetrieveResponse
+            citedReferencesSearchResults
+            citingArticles
+            citingArticlesResponse
+            editionDesc
+            fullRecordData
+            fullRecordSearchResults
+            keyValuePair
+            labelValuesPair
+            queryParameters
+            relatedRecords
+            relatedRecordsResponse
+            retrieve
+            retrieveById
+            retrieveByIdResponse
+            retrieveParameters
+            retrieveResponse
+            search
+            searchResponse
+            sortField
+            timeSpan
+            viewField

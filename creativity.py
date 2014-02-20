@@ -20,10 +20,12 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+
 from suds.client import Client
 import suds
 import logging
 import sys
+import time
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
@@ -56,83 +58,94 @@ class Query (object):
 		self.client = Client(queryUrl)
 		self.client.set_options(headers={'Cookie':"SID=\""+str(SID)+"\""})
 	def search (self, queryParameters, retrieveParameters):
+		time.sleep(0.5)
 		try:
-			search_result = self.client.service.search(queryParameters,retrieveParameters)
+			result = self.client.service.search(queryParameters,retrieveParameters)
+			return result
 		except suds.WebFault, e:
 			print e
-		return search_result
-	def citingArticles (self, queryParameters, uid, retrieveParameters):
+	def citingArticles (self, databaseId, uid, editions, timeSpan, language, retrieveParameters):
+		time.sleep(0.5)
 		try:
-			citing_result = self.client.service.citingArticles(
-					queryParameters['databaseId'],
-					uid,
-					queryParameters['editions'],
-					queryParameters['timeSpan'],
-					queryParameters['queryLanguage'],
-					retrieveParameters)
+			result = self.client.service.citingArticles( databaseId, uid, editions, timeSpan, language, retrieveParameters)
+			return result
 		except suds.WebFault, e:
 			print e
-		return citing_result
+	def citedReferences (self, databaseId, uid, language, retrieveParameters):
+		time.sleep(0.5)
+		try:
+			result = self.client.service.citedReferences(databaseId,uid,language,retrieveParameters)
+			return result
+		except suds.WebFault, e:
+			print e
+
+#functions
+#Given input author, who is cocited with him
+def cocitation_with (	query, 		#queryClient 
+						authorName, #name of the input author
+						dbId, #database to search from
+						editions, 	#edition to search from
+						symbolicTimeSpan, #symbolic time span to search from
+						timeSpan, 	#actual time span to search from (choose symbolic or actual)
+						language, 	#queryLanguage
+						count_s, 	#max num of work by input to be considered
+						count_ca, 	#max num of work that cites work by input to be considered
+						count_cr):	#max num of author that is cocited with input to be considered
+									# count_** is maximum value, because repetition is usual
+	pair_list = []
+	userQuery = 'AU='+authorName #query that is used to search database
+	fRecord = 1; #from which record the function should start searching from
+	sortField = { 'name':'TC', 'sort':'D'} #how the result is sorted (TC=times cited, D= descending)
+	option = { 'key':'RecordIDs', 'value':'On',} #what optional value should be included in result
+
+	#search is called from query
+	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': [editions,], 'symbolicTimeSpan': sTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
+
+	#citingAriticles is called from query
+	for x in search_result.optionValue[0].value:
+		citing_result = query.citingArticles( dbId, x, [editions,], [timeSpan,], language, { 'firstRecord': fRecord, 'count': count_ca, 'sortField': [sortField,], 'viewField': None, 'option': [option,],})
+		
+		#citedReferences is called from query
+		for y in citing_result.optionValue[0].value:
+			cited_result = query.citedReferences( dbId, y, language, { 'firstRecord': fRecord, 'count': count_cr, 'sortField': [sortField,],	'viewField': None, 'option': None, })
+			
+			for z in cited_result.references:
+				pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper()})
+
+	#if output and input is the same, remove it as that is unnecessary tuple
+	for x in pair_list:
+		if x['input'] == x['output']:
+			pair_list.remove({'input':x['input'], 'output':x['output']})
+	return pair_list
+
+#--------------------
+#MAIN STARTS HERE
 
 #VARIABLES
-#Author name hard coded for the purpose of programming later to be changed as input
-AuthorName = "Chomczynski, P"
+authorName = "Chomczynski, P"
 
 #instance of Authenticate created and authenticateSession is called
 authentication = Authenticate()
 authentication.authenticateSession()
-print '\n'+"Current Session ID "
-print authentication.SID
-print "-----------"
 
 #instance of Query created
 query = Query(authentication.SID)
 
-#queryParameters (#1 input)
 databaseId = 'WOS'
-query = 'AU='+AuthorName
 editions = { 'collection':'WOS', 'edition':'SCI', }
 sTimeSpan = None
 timeSpan = { 'begin':'1980-01-01', 'end':'2013-12-31', }
 language = 'en'
-queryParameters_S = { 	'databaseId': databaseId, 'userQuery': query, 'editions': [editions,],
-						'symbolicTimeSpan': sTimeSpan, 'timeSpan': [timeSpan,], 
-						'queryLanguage': language, }
+count_search = 2
+count_ca = 5
+count_cr = 2
 
-#retrieveParameters (#2 input)
-firstRecord = 1
-count = 1
-sortField = { 'name':'TC', 'sort':'D' }
-viewField = None
-option = { 'key':'RecordIDs', 'value':'On', }
-retrieveParameters_S = {	'firstRecord': firstRecord, 'count': count, 'sortField': sortField,
-							'viewField': viewField, 'option': [option,], }
-
-#search is called from query
-search_result = query.search(queryParameters_S,retrieveParameters_S)
-rid = search_result.optionValue[0].value[0]
-
-#printing result
-print '\n'+"Most higly cited work of "+AuthorName
-print rid
-print "-----------"
-
-#input parameter for citingArticles
-firstRecord = 1
-count = 5
-retrieveParameters_CA = { 'firstRecord': firstRecord, 'count': count, 'sortField': [sortField,],
-							'viewField': viewField, 'option': [option,], }
-
-#citingAriticles is called from query
-citing_result = query.citingArticles(queryParameters_S,rid,retrieveParameters_CA)
-rid_list = citing_result.optionValue[0].value
-
-#printing result
-print '\n'+"5 works that cited the most highly cited workd of "+AuthorName+" (in descending order)"
-print rid_list
-print "----------"
+#explanation of arguments are done in the actual function itself
+pair_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
 
 #closing session before program exits
 authentication.closeSession()
 
-
+#print output
+for x in pair_list:
+	print x['input'] + " :  " + x['output']

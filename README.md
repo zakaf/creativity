@@ -27,7 +27,7 @@ For ease of use, create a command that will run creativity.py
 
 Goal
 ----------
-Feb 14, 2014 ~
+Feb 14, 2014 ~ Feb 19, 2014
 
 Summary: 
 * input one scientist and return 5 scientists that has been co-cited with him in a scientific paper
@@ -56,10 +56,23 @@ Feb 18, 2014
 * made code cleaner and more objected-oriented like by creating 'Authenticate' and 'Query' class.
 * as of now, program prints session id, most highly cited work of Chomczynski, P, 5 most highly cited works that cites the previous work of Chomczynski, P
 
-Known Bugs
+Feb 19, 2014
+* co-cited authors can be returned
+* input author can be returned, so i've removed tuples with same input and output author
+* different arguments for cocitation_with function have been documented
+* program will output co-cited authors with input author
+* Feb 14, 2014 ~ Feb 19, 2014 GOAL DONE
+
+Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
-* There is a need for me to look into the request limit set by the server. With that i can halt the program for few seconds or minutes, before server stops responding to me for few minutes. Intentionally halting the program for certain time frame would be better than server initiated forceful halt (need to get another session id and other unknown issues).
+* (Possible) There have been few irregularity in returned data, so there might be error arising due to lack of debugging. Therefore if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
+
+Issues
+----------
+* Every query request automatically pauses 0.5 seconds before requesting result from server (2 queries per second limit set by server) (program takes care of this)
+* User should run this program maximum of 5 times in 5 minutes period. (5 authentication requests per 5 minutes limit set by server) (user have to take care of this, but the worst thing that can happen is error popping up and user waiting for 5 minutes or until the time shown in the error)
+
 
 Contact
 ----------
