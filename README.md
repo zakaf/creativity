@@ -28,28 +28,43 @@ For ease of use, create a command, "creativity", that will run creativity.py
 How to Use
 -----------
 Command should look like the following:
-	<code> creativity <inputAuthor> <intputFileName>
-	ex) <code> creativity Bilder,R sample_inputfile</code>
+*	<code> creativity inputAuthor intputFileName</code>
+*	ex) <code> creativity Bilder,R sample_inputfile</code>
 
 Input file should look like the below with values changed:
 
 ----------
 
-#databaseId:
+\#databaseId:
+
 WOS
-#editions:
+
+\#editions:
+
 SCI
-#timeSpan Begin
+
+\#timeSpan Begin
+
 1980-01-01
-#timeSpan End
+
+\#timeSpan End
+
 2013-12-31
-#language
+
+\#language
+
 en
-#search limit
+
+\#search limit
+
 2
-#citingArticles limit
+
+\#citingArticles limit
+
 5
-#citedReferences limit
+
+\#citedReferences limit
+
 2
 
 ----------
@@ -60,14 +75,14 @@ What each line means
 * The lines starting without '#' means that these are values
 
 Format and possible values:
-	databaseId 		= values specified in the web of science guide
-	editions 		= values specified in the web of science guide
-	timeSpan Begin	= YYYY-MM-DD
-	timeSpan End	= YYYY-MM-DD
-	language 		= values specified in the web of science guide
-	search limit 	= minimum of 1 and maximum of 100
-	citingArticles limit = minimum of 1 and maximum of 100
-	citiedReferences limit = minimum of 1 and maximum of 100
+*	databaseId 		= values specified in the web of science guide
+*	editions 		= values specified in the web of science guide
+*	timeSpan Begin	= YYYY-MM-DD
+*	timeSpan End	= YYYY-MM-DD
+*	language 		= values specified in the web of science guide
+*	search limit 	= minimum of 1 and maximum of 100
+*	citingArticles limit = minimum of 1 and maximum of 100
+*	citiedReferences limit = minimum of 1 and maximum of 100
 
 Goal
 ----------
