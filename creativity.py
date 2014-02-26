@@ -99,18 +99,30 @@ def cocitation_with (	query, 		#queryClient
 	option = { 'key':'RecordIDs', 'value':'On',} #what optional value should be included in result
 
 	#search is called from query
-	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': [editions,], 'symbolicTimeSpan': sTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
+	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': [editions,], 'symbolicTimeSpan': symbolicTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
+
+	if search_result.recordsFound == 0:
+		print "No Search Result for such author"
+		return pair_list
 
 	#citingAriticles is called from query
 	for x in search_result.optionValue[0].value:
 		citing_result = query.citingArticles( dbId, x, [editions,], [timeSpan,], language, { 'firstRecord': fRecord, 'count': count_ca, 'sortField': [sortField,], 'viewField': None, 'option': [option,],})
 		
+		if citing_result.recordsFound == 0:
+			print "No Citing Articles Result for such author"
+			return pair_list
+
 		#citedReferences is called from query
 		for y in citing_result.optionValue[0].value:
 			cited_result = query.citedReferences( dbId, y, language, { 'firstRecord': fRecord, 'count': count_cr, 'sortField': [sortField,],	'viewField': None, 'option': None, })
 			
+			if len(cited_result.references) == 0:
+				print "No Cited Result for such author"
+				return pair_list
+
 			for z in cited_result.references:
-				pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper()})
+				pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ","")})
 
 	#if output and input is the same, remove it as that is unnecessary tuple
 	for x in pair_list:
@@ -120,32 +132,75 @@ def cocitation_with (	query, 		#queryClient
 
 #--------------------
 #MAIN STARTS HERE
+def main(argv):
+	#authorName = "Chomczynski,P"
+	#inputfile = ''
+	skipCount =0
+	databaseId = 'WOS'
+	editions = { 'collection':'WOS', 'edition':'SCI', }
+	sTimeSpan = None
+	timeSpan = { 'begin':'1980-01-01', 'end':'2013-12-31', }
+	language = 'en'
+	count_search = 2
+	count_ca = 5
+	count_cr = 2
+	
+	
+	if len(argv) != 2:
+		print "Error: Not Enough Argument"
+		sys.exit(2)
+	
+	authorName = argv[0]
+	inputfile =  argv[1]
 
-#VARIABLES
-authorName = "Chomczynski, P"
+	try:
+		f = open(inputfile,'r')
+		lines = f.readlines()
+		f.close()
+	except IOError as e:
+		print "File I/O Eror"
+		sys.exit(1)
+	
 
-#instance of Authenticate created and authenticateSession is called
-authentication = Authenticate()
-authentication.authenticateSession()
+	for line in lines:
+		if line[0][0] == '#':
+			skipCount = skipCount+1
+		else:
+			if skipCount == 1:
+				databaseId = line.rstrip('\n')
+			elif skipCount == 2:
+				editions = { 'collection':databaseId, 'edition':line.rstrip('\n'), }
+			elif skipCount == 3:
+				timeSpan['begin'] = line.rstrip('\n')
+			elif skipCount == 4:
+				timeSpan['end'] = line.rstrip('\n')
+			elif skipCount == 5:
+				language = line.rstrip('\n')
+			elif skipCount == 6:
+				count_search = line.rstrip('\n')
+			elif skipCount == 7:
+				count_ca = line.rstrip('\n')
+			elif skipCount == 8:
+				count_cr = line.rstrip('\n')
+			else:
+				break
 
-#instance of Query created
-query = Query(authentication.SID)
+	#instance of Authenticate created and authenticateSession is called
+	authentication = Authenticate()
+	authentication.authenticateSession()
+	
+	#instance of Query created
+	query = Query(authentication.SID)
+	
+	#explanation of arguments are done in the actual function itself
+	pair_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
 
-databaseId = 'WOS'
-editions = { 'collection':'WOS', 'edition':'SCI', }
-sTimeSpan = None
-timeSpan = { 'begin':'1980-01-01', 'end':'2013-12-31', }
-language = 'en'
-count_search = 2
-count_ca = 5
-count_cr = 2
+	#closing session before program exits
+	authentication.closeSession()
+	
+	#print output
+	for x in pair_list:
+		print x['input'] + " :  " + x['output']
 
-#explanation of arguments are done in the actual function itself
-pair_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
-
-#closing session before program exits
-authentication.closeSession()
-
-#print output
-for x in pair_list:
-	print x['input'] + " :  " + x['output']
+if __name__ == "__main__":
+	main(sys.argv[1:])

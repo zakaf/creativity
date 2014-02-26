@@ -25,6 +25,50 @@ For ease of use, create a command, "creativity", that will run creativity.py
 
     <code>ln -s $PWD/creativity.py ~/bin/creativity</code>
 
+How to Use
+-----------
+Command should look like the following:
+	<code> creativity <inputAuthor> <intputFileName>
+	ex) <code> creativity Bilder,R sample_inputfile</code>
+
+Input file should look like the below with values changed:
+
+----------
+
+#databaseId:
+WOS
+#editions:
+SCI
+#timeSpan Begin
+1980-01-01
+#timeSpan End
+2013-12-31
+#language
+en
+#search limit
+2
+#citingArticles limit
+5
+#citedReferences limit
+2
+
+----------
+
+What each line means
+* Lines starting with '#' means that it is an explanation to the value below
+* You can change the explanation, but do not remove '#' or the line itself
+* The lines starting without '#' means that these are values
+
+Format and possible values:
+	databaseId 		= values specified in the web of science guide
+	editions 		= values specified in the web of science guide
+	timeSpan Begin	= YYYY-MM-DD
+	timeSpan End	= YYYY-MM-DD
+	language 		= values specified in the web of science guide
+	search limit 	= minimum of 1 and maximum of 100
+	citingArticles limit = minimum of 1 and maximum of 100
+	citiedReferences limit = minimum of 1 and maximum of 100
+
 Goal
 ----------
 Feb 14, 2014 ~ Feb 19, 2014
@@ -39,6 +83,8 @@ Steps:
 * choose one author of the work that has been chosen in for all 5 works.(author with highest h-index score)
 * output 5 authors and their work that previous step chooses
 
+Feb 25, 2014
+* Input argument for author and settings_file
 
 Progress
 ----------
@@ -63,10 +109,17 @@ Feb 19, 2014
 * program will output co-cited authors with input author
 * Feb 14, 2014 ~ Feb 19, 2014 GOAL DONE
 
+Feb 25, 2014
+* now input author is not hard coded and accepts it as an arugment
+* settings is not hard coded and the file name of the settings file is accepted as an argument
+* the sample settings file is described above as well as how command should look like
+Feb 25, 2014 GOAL DONE
+
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 * (Possible) There have been few irregularity in returned data, so there might be error arising due to lack of debugging. Therefore if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
+* (Possible) There might be problem, when reading input, so please follow the instruction with input file
 
 Issues
 ----------
