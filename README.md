@@ -34,7 +34,6 @@ Command should look like the following:
 Input file should look like the below with values changed:
 
 ----------
-
 #databaseId:
 WOS
 #editions:
@@ -51,7 +50,6 @@ en
 5
 #citedReferences limit
 2
-
 ----------
 
 What each line means
