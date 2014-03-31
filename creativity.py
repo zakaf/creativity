@@ -110,25 +110,42 @@ def cocitation_with (	query, 		#queryClient
 		citing_result = query.citingArticles( dbId, x, [editions,], [timeSpan,], language, { 'firstRecord': fRecord, 'count': count_ca, 'sortField': [sortField,], 'viewField': None, 'option': [option,],})
 		
 		if citing_result.recordsFound == 0:
-			print "No Citing Articles Result for such author"
-			return pair_list
+			continue
 
 		#citedReferences is called from query
 		for y in citing_result.optionValue[0].value:
-			cited_result = query.citedReferences( dbId, y, language, { 'firstRecord': fRecord, 'count': count_cr, 'sortField': [sortField,],	'viewField': None, 'option': None, })
+			cited_result = query.citedReferences( dbId, y, language, { 'firstRecord': fRecord, 'count': count_cr, 'sortField': [sortField,], 'viewField': None, 'option': None, })
 			
 			if len(cited_result.references) == 0:
-				print "No Cited Result for such author"
-				return pair_list
+				continue
 
 			for z in cited_result.references:
-				pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ","")})
-
+				try:
+					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ","")})
+				except AttributeError:
+					pass
+					
 	#if output and input is the same, remove it as that is unnecessary tuple
 	for x in pair_list:
 		if x['input'] == x['output']:
 			pair_list.remove({'input':x['input'], 'output':x['output']})
 	return pair_list
+
+def list_count (pair_list):
+	new_list = []
+	for x in pair_list:
+		if len(new_list) == 0:
+			new_list.append({'input':x['input'], 'output':x['output'], 'count':1})
+			continue
+		new = 1
+		for y in new_list:
+			if x['input'] == y['input'] and x['output'] == y['output']:
+				y['count'] = y['count'] +1
+				new = 0
+				break
+		if new == 1:
+			new_list.append({'input':x['input'], 'output':x['output'], 'count':1})
+	return new_list
 
 #--------------------
 #MAIN STARTS HERE
@@ -199,8 +216,10 @@ def main(argv):
 	authentication.closeSession()
 	
 	#print output
-	for x in pair_list:
-		print x['input'] + " :  " + x['output']
+	count_list = list_count(pair_list)
+	for y in count_list:
+		print y['input'] + " :  " + y['output'] + " :  " + str(y['count'])
+
 
 if __name__ == "__main__":
 	main(sys.argv[1:])

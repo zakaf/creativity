@@ -1,7 +1,7 @@
-Creativity Web Project (under development)
+Creativity Web Project Using Web of Science(under development)
 ==========
 
-Creativity Web targets to develop a network of creative scientists in different areas
+Creativity Web targets to investigate a network of creative scientists in different areas under the supervision of Dr. Robert M. Bilder and Kendra Knudsen
 
 Requirement
 ----------
@@ -28,27 +28,42 @@ For ease of use, create a command, "creativity", that will run creativity.py
 How to Use
 -----------
 Command should look like the following:
-	<code> creativity <inputAuthor> <intputFileName>
-	ex) <code> creativity Bilder,R sample_inputfile</code>
+*	<code> creativity inputAuthor intputFileName</code>
+*	ex) <code> creativity Bilder,R sampleinputfile</code>
 
 Input file should look like the below with values changed:
 
 ----------
-#databaseId:
+\#databaseId:
+
 WOS
-#editions:
+
+\#editions:
+
 SCI
-#timeSpan Begin
+
+\#timeSpan Begin
+
 1980-01-01
-#timeSpan End
+
+\#timeSpan End
+
 2013-12-31
-#language
+
+\#language
+
 en
-#search limit
+
+\#search limit
+
 2
-#citingArticles limit
+
+\#citingArticles limit
+
 5
-#citedReferences limit
+
+\#citedReference limit
+
 2
 ----------
 
@@ -58,14 +73,14 @@ What each line means
 * The lines starting without '#' means that these are values
 
 Format and possible values:
-	databaseId 		= values specified in the web of science guide
-	editions 		= values specified in the web of science guide
-	timeSpan Begin	= YYYY-MM-DD
-	timeSpan End	= YYYY-MM-DD
-	language 		= values specified in the web of science guide
-	search limit 	= minimum of 1 and maximum of 100
-	citingArticles limit = minimum of 1 and maximum of 100
-	citiedReferences limit = minimum of 1 and maximum of 100
+*	databaseId 		= values specified in the web of science guide
+*	editions 		= values specified in the web of science guide
+*	timeSpan Begin	= YYYY-MM-DD
+*	timeSpan End	= YYYY-MM-DD
+*	language 		= values specified in the web of science guide
+*	search limit 	= minimum of 1 and maximum of 100
+*	citingArticles limit = minimum of 1 and maximum of 100
+*	citiedReferences limit = minimum of 1 and maximum of 100
 
 Goal
 ----------
@@ -82,7 +97,11 @@ Steps:
 * output 5 authors and their work that previous step chooses
 
 Feb 25, 2014
-* Input argument for author and settings_file
+* Input argument for author and settings file
+
+March 30, 2014 ~
+* Iterative search would allow the program to collect more relationship data.
+* Count how many of the same co-citation relationship is being observed
 
 Progress
 ----------
@@ -103,7 +122,7 @@ Feb 18, 2014
 Feb 19, 2014
 * co-cited authors can be returned
 * input author can be returned, so i've removed tuples with same input and output author
-* different arguments for cocitation_with function have been documented
+* different arguments for cocitation with function have been documented
 * program will output co-cited authors with input author
 * Feb 14, 2014 ~ Feb 19, 2014 GOAL DONE
 
@@ -113,10 +132,16 @@ Feb 25, 2014
 * the sample settings file is described above as well as how command should look like
 Feb 25, 2014 GOAL DONE
 
+March 30, 2014
+* Possible Graphical Representation library is being reviewed.
+* Error caused by a return with unknown citedAuthor is fixed 
+* Repeated co-citation is now removed, instead the output now shows the count of the same co-citation next to the input and the output author
+
+
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
-* (Possible) There have been few irregularity in returned data, so there might be error arising due to lack of debugging. Therefore if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
+* (Possible) There have been few irregularity in returned data, so there might be error arising due to a lack of debugging. So if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
 * (Possible) There might be problem, when reading input, so please follow the instruction with input file
 
 Issues
