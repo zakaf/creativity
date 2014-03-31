@@ -32,6 +32,7 @@ Command should look like the following:
 *	ex) <code> creativity Bilder,R sampleinputfile</code>
 
 Input file should look like the below with values changed:
+(For your reference, this repository has a sample file)
 
 ----------
 \#databaseId:
