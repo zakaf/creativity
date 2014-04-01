@@ -3,7 +3,7 @@ Creativity Web Project Using Web of Science(under development)
 
 Creativity Web targets to investigate a network of creative scientists in different areas under the supervision of Dr. Robert M. Bilder and Kendra Knudsen
 
-Requirement
+Before Using the Program
 ----------
 IP address has to be registered at the web of science server and granted access to its premium service, not its lite service
 * If your computer is connected to UCLA network or UCLA VPN, it has already been pre-registered
@@ -28,8 +28,9 @@ For ease of use, create a command, "creativity", that will run creativity.py
 How to Use
 -----------
 Command should look like the following:
-*	<code> creativity inputAuthor intputFileName</code>
-*	ex) <code> creativity Bilder,R sampleinputfile</code>
+*	<code> creativity inputAuthor intputFileName outputFileName</code>
+*	ex) <code> creativity Bilder,R sampleinputfile output</code>
+*	.csv extension will be automatically added by the program for the outputFileName
 
 Input file should look like the below with values changed:
 (For your reference, this repository has a sample file)
@@ -84,26 +85,11 @@ Format and possible values:
 *	citingArticles limit = minimum of 1 and maximum of 100
 *	citiedReferences limit = minimum of 1 and maximum of 100
 
-Goal
+Function
 ----------
-Feb 14, 2014 ~ Feb 19, 2014
-
-Summary: 
-* input one scientist and return 5 scientists that has been co-cited with him in a scientific paper
-
-Steps:
-* Input one scientist and get one most highly cited work of his
-* Get 5 works that have cited the above work (the most highly cited works)
-* Get a most higly cited work that the above work has cited for all 5 works (other than the work from input scientist)
-* choose one author of the work that has been chosen in for all 5 works.(author with highest h-index score)
-* output 5 authors and their work that previous step chooses
-
-Feb 25, 2014
-* Input argument for author and settings file
-
-March 30, 2014 ~
-* Iterative search would allow the program to collect more relationship data.
-* Count how many of the same co-citation relationship is being observed
+* With a given input author, the program will return a list of two authors who have been co-cited and the number of unique co-citations they received.
+* Users can personalize the co-citation search through input settings file
+* The output is in csv file, so the output is platform independent and easily readable.
 
 Progress
 ----------
@@ -139,6 +125,10 @@ March 30, 2014
 * Error caused by a return with unknown citedAuthor is fixed 
 * Repeated co-citation is now removed, instead the output now shows the count of the same co-citation next to the input and the output author
 
+March 31, 2014
+* The return will be sorted by the number of co-citation (high to low) then the alphabetical order.
+* The program saves an information about how two authors are related (which works of them and others make them co-cited)
+* The return is saved into a csv file
 
 Known/Possible Bugs
 ----------

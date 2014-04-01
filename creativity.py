@@ -26,6 +26,7 @@ import suds
 import logging
 import sys
 import time
+import csv
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
@@ -121,7 +122,7 @@ def cocitation_with (	query, 		#queryClient
 
 			for z in cited_result.references:
 				try:
-					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ","")})
+					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ",""), 'inputWork':x, 'citingWork':y, 'outputWork':z.citedTitle})
 				except AttributeError:
 					pass
 					
@@ -135,16 +136,18 @@ def list_count (pair_list):
 	new_list = []
 	for x in pair_list:
 		if len(new_list) == 0:
-			new_list.append({'input':x['input'], 'output':x['output'], 'count':1})
+			new_list.append({'input':x['input'], 'output':x['output'], 'count':1, 'reference':[{'inputWork':x['inputWork'],'citingWork':x['citingWork'],'outputWork':x['outputWork']},]})
 			continue
 		new = 1
 		for y in new_list:
 			if x['input'] == y['input'] and x['output'] == y['output']:
 				y['count'] = y['count'] +1
+				y['reference'].append({'inputWork':x['inputWork'],'citingWork':x['citingWork'],'outputWork':x['outputWork']})
 				new = 0
 				break
 		if new == 1:
-			new_list.append({'input':x['input'], 'output':x['output'], 'count':1})
+			new_list.append({'input':x['input'], 'output':x['output'], 'count':1, 'reference':[{'inputWork':x['inputWork'],'citingWork':x['citingWork'],'outputWork':x['outputWork']},]})
+		new_list = sorted(new_list,key=lambda tuples: (tuples['count']*-1, tuples['output']))
 	return new_list
 
 #--------------------
@@ -163,12 +166,13 @@ def main(argv):
 	count_cr = 2
 	
 	
-	if len(argv) != 2:
+	if len(argv) != 3:
 		print "Error: Not Enough Argument"
 		sys.exit(2)
 	
 	authorName = argv[0]
 	inputfile =  argv[1]
+	outputfile = argv[2]
 
 	try:
 		f = open(inputfile,'r')
@@ -217,8 +221,14 @@ def main(argv):
 	
 	#print output
 	count_list = list_count(pair_list)
-	for y in count_list:
-		print y['input'] + " :  " + y['output'] + " :  " + str(y['count'])
+	with open(outputfile+".csv",'ab') as f:
+		writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
+		for row in count_list:
+			writer.writerow([row['input'],row['output'],row['count']])
+	#for y in count_list:
+	#	print y['input'] + " :  " + y['output'] + " :  " + str(y['count'])
+	#	for z in y['reference']:
+	#		print z['inputWork'] + " " + z['citingWork'] + " " + z['outputWork']
 
 
 if __name__ == "__main__":
