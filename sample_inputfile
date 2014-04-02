@@ -9,8 +9,10 @@ SCI
 #language
 en
 #search limit
-3
+2
 #citingArticles limit
 5
 #citedReferences limit
-3
+2
+#Number of authors to recursively search for (minimum 1)
+2

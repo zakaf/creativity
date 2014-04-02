@@ -27,6 +27,7 @@ import logging
 import sys
 import time
 import csv
+from collections import deque
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
@@ -103,7 +104,7 @@ def cocitation_with (	query, 		#queryClient
 	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': [editions,], 'symbolicTimeSpan': symbolicTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
 
 	if search_result.recordsFound == 0:
-		print "No Search Result for such author"
+		print "No Search Result for " + authorName
 		return pair_list
 
 	#citingAriticles is called from query
@@ -125,11 +126,11 @@ def cocitation_with (	query, 		#queryClient
 					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ",""), 'inputWork':x, 'citingWork':y, 'outputWork':z.citedTitle})
 				except AttributeError:
 					pass
-					
+
 	#if output and input is the same, remove it as that is unnecessary tuple
 	for x in pair_list:
 		if x['input'] == x['output']:
-			pair_list.remove({'input':x['input'], 'output':x['output']})
+			pair_list.remove({'input':x['input'], 'output':x['output'], 'inputWork':x['inputWork'], 'citingWork':x['citingWork'],'outputWork':x['outputWork']})
 	return pair_list
 
 def list_count (pair_list):
@@ -150,11 +151,20 @@ def list_count (pair_list):
 		new_list = sorted(new_list,key=lambda tuples: (tuples['count']*-1, tuples['output']))
 	return new_list
 
+def duplicate_check_prepare (pair_list):
+	for x in pair_list:
+		if cmp(x['input'],x['output']) > 0:
+			y = x['input']
+			x['input'] = x['output']
+			x['output'] = y
+	pair_list = sorted(pair_list,key=lambda tuples: (tuples['input'], tuples['output']))
+	return pair_list
+
 #--------------------
 #MAIN STARTS HERE
 def main(argv):
-	#authorName = "Chomczynski,P"
-	#inputfile = ''
+	authorNames = deque([])
+	doneNames = []
 	skipCount =0
 	databaseId = 'WOS'
 	editions = { 'collection':'WOS', 'edition':'SCI', }
@@ -164,13 +174,15 @@ def main(argv):
 	count_search = 2
 	count_ca = 5
 	count_cr = 2
+	numAuthor = 1
+	total_list = []
 	
 	
 	if len(argv) != 3:
 		print "Error: Not Enough Argument"
 		sys.exit(2)
 	
-	authorName = argv[0]
+	authorNames.append(argv[0])
 	inputfile =  argv[1]
 	outputfile = argv[2]
 
@@ -203,6 +215,8 @@ def main(argv):
 				count_ca = line.rstrip('\n')
 			elif skipCount == 8:
 				count_cr = line.rstrip('\n')
+			elif skipCount == 9:
+				numAuthor = int(line.rstrip('\n'))
 			else:
 				break
 
@@ -210,26 +224,57 @@ def main(argv):
 	authentication = Authenticate()
 	authentication.authenticateSession()
 	
-	#instance of Query created
-	query = Query(authentication.SID)
-	
-	#explanation of arguments are done in the actual function itself
-	pair_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
+	while True:	
+
+		authorName = authorNames.popleft()
+
+		print "AuthorName"	
+		print authorName
+
+		#instance of Query created
+		query = Query(authentication.SID)
+		
+		#explanation of arguments are done in the actual function itself
+		pair_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
+		
+		total_list = total_list + pair_list
+
+		#print output
+		count_list = list_count(pair_list)
+
+		doneNames.append(authorName)
+
+		for x in count_list:
+			duplicate = False
+			for y in authorNames:
+				if y == x['output']:
+					duplicate = True
+					break
+			for z in doneNames:
+				if z == x['output']:
+					duplicate = True
+					break
+			if duplicate == False:
+				authorNames.append(x['output'])
+			if len(doneNames) + len(authorNames) >= numAuthor:
+				break
+
+		if len(doneNames) == numAuthor:
+			break
 
 	#closing session before program exits
 	authentication.closeSession()
-	
-	#print output
-	count_list = list_count(pair_list)
+
+	total_list = duplicate_check_prepare(total_list)
+	for z in total_list:
+		print z['input'] + " " + z['output'] + " " + z['inputWork'] + " " + z['citingWork'] + " " + z['outputWork']
+	total_list = list_count(total_list)
+	#duplicate removal needed based on the reference		
+
 	with open(outputfile+".csv",'ab') as f:
 		writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
-		for row in count_list:
+		for row in total_list:
 			writer.writerow([row['input'],row['output'],row['count']])
-	#for y in count_list:
-	#	print y['input'] + " :  " + y['output'] + " :  " + str(y['count'])
-	#	for z in y['reference']:
-	#		print z['inputWork'] + " " + z['citingWork'] + " " + z['outputWork']
-
 
 if __name__ == "__main__":
 	main(sys.argv[1:])

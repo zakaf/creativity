@@ -68,6 +68,10 @@ en
 
 2
 
+\#number of authors to recursively search for
+
+2
+
 ----------
 
 What each line means
@@ -84,6 +88,7 @@ Format and possible values:
 *	search limit 	= minimum of 1 and maximum of 100
 *	citingArticles limit = minimum of 1 and maximum of 100
 *	citiedReferences limit = minimum of 1 and maximum of 100
+*	number of authors to recursively search for = minimum of 1
 
 Function
 ----------
@@ -135,6 +140,7 @@ Known/Possible Bugs
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 * (Possible) There have been few irregularity in returned data, so there might be error arising due to a lack of debugging. So if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
 * (Possible) There might be problem, when reading input, so please follow the instruction with input file
+* (solution needed) web of science has two notations of the name. ex) Bilder,R and Bilder,Roberr However, the program is unable to detect that these two names refer to the same person.
 
 Issues
 ----------
