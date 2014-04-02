@@ -28,6 +28,7 @@ import sys
 import time
 import csv
 from collections import deque
+from bs4 import BeautifulSoup
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
@@ -81,7 +82,6 @@ class Query (object):
 		except suds.WebFault, e:
 			print e
 
-#functions
 #Given input author, who is cocited with him
 def cocitation_with (	query, 		#queryClient 
 						authorName, #name of the input author
@@ -107,8 +107,17 @@ def cocitation_with (	query, 		#queryClient
 		print "No Search Result for " + authorName
 		return pair_list
 
+	searchTitle = BeautifulSoup(search_result.records, "xml")
+
+	title_list1 = deque()
+	for t in searchTitle.find_all(type="item"):
+		title_list1.append(t.string)
+
 	#citingAriticles is called from query
 	for x in search_result.optionValue[0].value:
+
+		x_title = title_list1.popleft()
+
 		citing_result = query.citingArticles( dbId, x, [editions,], [timeSpan,], language, { 'firstRecord': fRecord, 'count': count_ca, 'sortField': [sortField,], 'viewField': None, 'option': [option,],})
 		
 		if citing_result.recordsFound == 0:
@@ -123,7 +132,7 @@ def cocitation_with (	query, 		#queryClient
 
 			for z in cited_result.references:
 				try:
-					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ",""), 'inputWork':x, 'citingWork':y, 'outputWork':z.citedTitle})
+					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ",""), 'inputWork':str(x_title).upper(), 'citingWork':y, 'outputWork':z.citedTitle.upper()})
 				except AttributeError:
 					pass
 
