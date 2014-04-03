@@ -102,7 +102,6 @@ def cocitation_with (	query, 		#queryClient
 
 	#search is called from query
 	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': [editions,], 'symbolicTimeSpan': symbolicTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
-
 	if search_result.recordsFound == 0:
 		print "No Search Result for " + authorName
 		return pair_list
@@ -123,8 +122,17 @@ def cocitation_with (	query, 		#queryClient
 		if citing_result.recordsFound == 0:
 			continue
 
+		citingTitle = BeautifulSoup(citing_result.records, "xml")
+	
+		title_list2 = deque()
+		for t in citingTitle.find_all(type="item"):
+			title_list2.append(t.string)
+
 		#citedReferences is called from query
 		for y in citing_result.optionValue[0].value:
+			
+			y_title = title_list2.popleft()
+
 			cited_result = query.citedReferences( dbId, y, language, { 'firstRecord': fRecord, 'count': count_cr, 'sortField': [sortField,], 'viewField': None, 'option': None, })
 			
 			if len(cited_result.references) == 0:
@@ -132,7 +140,7 @@ def cocitation_with (	query, 		#queryClient
 
 			for z in cited_result.references:
 				try:
-					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(" ",""), 'inputWork':str(x_title).upper(), 'citingWork':y, 'outputWork':z.citedTitle.upper()})
+					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(", ",","), 'inputWork':str(x_title).upper(), 'citingWork':str(y_title).upper(), 'outputWork':z.citedTitle.upper()})
 				except AttributeError:
 					pass
 
@@ -166,8 +174,18 @@ def duplicate_check_prepare (pair_list):
 			y = x['input']
 			x['input'] = x['output']
 			x['output'] = y
+		if cmp(x['inputWork'],x['outputWork']) == 0:
+				pair_list.remove({'input':x['input'], 'output':x['output'], 'inputWork':x['inputWork'], 'citingWork':x['citingWork'],'outputWork':x['outputWork']})
 	pair_list = sorted(pair_list,key=lambda tuples: (tuples['input'], tuples['output']))
 	return pair_list
+
+def duplicate_reference (pair_list):
+	#for x in pair_list:
+	#	for z in x['reference']:
+	#		if cmp(z['inputWork'],z['outputWork']) == 0:
+	#			print x['input'] + " : " + x['output'] + " | " + z['inputWork']
+	return pair_list
+
 
 #--------------------
 #MAIN STARTS HERE
@@ -237,8 +255,7 @@ def main(argv):
 
 		authorName = authorNames.popleft()
 
-		print "AuthorName"	
-		print authorName
+		print "Name: " + authorName
 
 		#instance of Query created
 		query = Query(authentication.SID)
@@ -274,16 +291,29 @@ def main(argv):
 	#closing session before program exits
 	authentication.closeSession()
 
+	for k in total_list:
+		print k['input'] + " " + k['output'] + " | " + k['inputWork'] + " | " + k['citingWork'] + " | " + k['outputWork']
+
 	total_list = duplicate_check_prepare(total_list)
-	for z in total_list:
-		print z['input'] + " " + z['output'] + " " + z['inputWork'] + " " + z['citingWork'] + " " + z['outputWork']
+	#for z in total_list:
+		#print z['input'] + " | " + z['output'] + " | " + z['inputWork'] + " | " + z['citingWork'] + " | " + z['outputWork']
+
 	total_list = list_count(total_list)
+
 	#duplicate removal needed based on the reference		
+
+	#total_list = duplicate_reference(total_list)
+
+	for k in total_list:
+		print k['input'] + " " + k['output'] 
+		for g in k['reference']:
+			print g['inputWork'] + " | " + g['citingWork'] + " | " + g['outputWork']
+
 
 	with open(outputfile+".csv",'ab') as f:
 		writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
 		for row in total_list:
 			writer.writerow([row['input'],row['output'],row['count']])
-
+	
 if __name__ == "__main__":
 	main(sys.argv[1:])

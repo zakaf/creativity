@@ -17,6 +17,9 @@ SUDS - python library for SOAP
 * <code>cd "directory with untarred content"</code> (remove quotation mark and replace it with actual name)
 * <code>sudo python setup.py install</code>
 
+Beautiful Soup 4 
+-instruction needed
+
 For ease of use, create a command, "creativity", that will run creativity.py
 * To make this command available to all users:
 
@@ -94,6 +97,10 @@ Function
 ----------
 * With a given input author, the program will return a list of two authors who have been co-cited and the number of unique co-citations they received.
 * Users can personalize the co-citation search through input settings file
+*    - Number of maximum co-citation from each author
+*    - NUmber of authors to recusively search co-citation for
+*    - Different edition and collection of Web of Science
+*    - Different time frame to choose from
 * The output is in csv file, so the output is platform independent and easily readable.
 
 Progress
@@ -134,6 +141,12 @@ March 31, 2014
 * The return will be sorted by the number of co-citation (high to low) then the alphabetical order.
 * The program saves an information about how two authors are related (which works of them and others make them co-cited)
 * The return is saved into a csv file
+
+April 3, 2014
+* Recursive author co-citation search has been implemented
+* There is a need for the program to remove duplicate and co-citation from the same paper
+* Removing co-citation from the same paper has been implemented, but not fully debugged due to internet disconnection
+* After reference duplicate removal is implemented, there is a need for large sample debugging
 
 Known/Possible Bugs
 ----------
