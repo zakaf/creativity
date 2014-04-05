@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 from collections import deque
 from collections import Counter
 from suds.client import Client
-import csv
+import csv, codecs, cStringIO
 import logging
 import operator
 import time
@@ -63,21 +63,21 @@ class Query (object):
 		self.client = Client(queryUrl)
 		self.client.set_options(headers={'Cookie':"SID=\""+str(SID)+"\""})
 	def search (self, queryParameters, retrieveParameters):
-		time.sleep(0.5)
+		time.sleep(1)
 		try:
 			result = self.client.service.search(queryParameters,retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
 	def citingArticles (self, databaseId, uid, editions, timeSpan, language, retrieveParameters):
-		time.sleep(0.5)
+		time.sleep(1)
 		try:
 			result = self.client.service.citingArticles( databaseId, uid, editions, timeSpan, language, retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
 	def citedReferences (self, databaseId, uid, language, retrieveParameters):
-		time.sleep(0.5)
+		time.sleep(1)
 		try:
 			result = self.client.service.citedReferences(databaseId,uid,language,retrieveParameters)
 			return result
@@ -187,6 +187,35 @@ def duplicate_reference (pair_list):
 		last = x
 		new_list.append(last)
 	return new_list
+
+class UnicodeWriter:
+    """
+    A CSV writer which will write rows to CSV file "f",
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") for s in row])
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
 
 #--------------------
 #MAIN STARTS HERE
@@ -325,14 +354,14 @@ def main(argv):
 	alc_sorted = sorted(alc.items(),key=lambda(k,v):(-v,k))
 
 	with open(outputfile2+".csv",'ab') as f:
-		writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
+		writer = UnicodeWriter(f, quoting=csv.QUOTE_NONNUMERIC)
 		for key, value in alc_sorted:
 			writer.writerow([str(key),str(value)])
 
 	with open(outputfile1+".csv",'ab') as g:
-		writer1 = csv.writer(g, quoting=csv.QUOTE_NONNUMERIC)
+		writer1 = UnicodeWriter(g, quoting=csv.QUOTE_NONNUMERIC)
 		for row in total_list:
-			writer1.writerow([row['input'],row['output'],row['count']])
+			writer1.writerow([row['input'],row['output'],str(row['count'])])
 	
 if __name__ == "__main__":
 	main(sys.argv[1:])
