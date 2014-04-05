@@ -1,4 +1,4 @@
-Creativity Web Project Using Web of Science(under development)
+Creativity Web Project Using Web of Science (under development)
 ==========
 
 Creativity Web targets to investigate a network of creative scientists in different areas under the supervision of Dr. Robert M. Bilder and Kendra Knudsen
@@ -17,13 +17,14 @@ SUDS - python library for SOAP
 * <code>cd "directory with untarred content"</code> (remove quotation mark and replace it with actual name)
 * <code>sudo python setup.py install</code>
 
-Beautiful Soup 4 
--instruction needed
+BeautifulSoup4 - python library for XML/HTML
+* In order to use BeautifulSoup4, <code>apt-get install python-bs4</code>
 
 For ease of use, create a command, "creativity", that will run creativity.py
 * To make this command available to all users:
 
     <code>sudo ln -s $PWD/creativity.py /usr/local/bin/creativity</code>
+
 * To make this command available only to current user (if you have ~/bin in your path):
 
     <code>ln -s $PWD/creativity.py ~/bin/creativity</code>
@@ -31,8 +32,8 @@ For ease of use, create a command, "creativity", that will run creativity.py
 How to Use
 -----------
 Command should look like the following:
-*	<code> creativity inputAuthor intputFileName outputFileName</code>
-*	ex) <code> creativity Bilder,R sampleinputfile output</code>
+*	<code> creativity inputAuthor intputFileName outputFileName1 outputFileName2</code>
+*	ex) <code> creativity Bilder,R sampleinputfile output1 output2</code>
 *	.csv extension will be automatically added by the program for the outputFileName
 
 Input file should look like the below with values changed:
@@ -95,12 +96,14 @@ Format and possible values:
 
 Function
 ----------
-* With a given input author, the program will return a list of two authors who have been co-cited and the number of unique co-citations they received.
+* With a given input author, the program will output a list of two authors who have been co-cited and the number of unique co-citations they received in the first file.
 * Users can personalize the co-citation search through input settings file
 *    - Number of maximum co-citation from each author
 *    - NUmber of authors to recusively search co-citation for
 *    - Different edition and collection of Web of Science
 *    - Different time frame to choose from
+* All duplicates are removed from the output, so only unique co-citations are considered
+* The number of co-citation that each author is involved with is returned in the second file
 * The output is in csv file, so the output is platform independent and easily readable.
 
 Progress
@@ -148,18 +151,21 @@ April 3, 2014
 * Removing co-citation from the same paper has been implemented, but not fully debugged due to internet disconnection
 * After reference duplicate removal is implemented, there is a need for large sample debugging
 
+April 4, 2014 ~ April 5, 2014
+* Reference duplicate (two or more same co-citation getting counted more than once) is now removed, when counting co-citation.
+* Program functionality is somewhat complete, but details have to be checked out.
+* Number of co-citation that each author is involved with is printed out in the second file
+
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 * (Possible) There have been few irregularity in returned data, so there might be error arising due to a lack of debugging. So if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
 * (Possible) There might be problem, when reading input, so please follow the instruction with input file
-* (solution needed) web of science has two notations of the name. ex) Bilder,R and Bilder,Roberr However, the program is unable to detect that these two names refer to the same person.
+* (has to be considered) web of science has two notations of the name. ex) Bilder,R and Bilder,Roberr However, the program is unable to detect that these two names refer to the same person.
 
-Issues
+Future Goal
 ----------
-* Every query request automatically pauses 0.5 seconds before requesting result from server (2 queries per second limit set by server) (program takes care of this)
-* User should run this program maximum of 5 times in 5 minutes period. (5 authentication requests per 5 minutes limit set by server) (user have to take care of this, but the worst thing that can happen is error popping up and user waiting for 5 minutes or until the time shown in the error)
-
+* Able to load data from previous search and continue with the search, so that data can add up
 
 Contact
 ----------

@@ -21,14 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-from suds.client import Client
-import suds
-import logging
-import sys
-import time
-import csv
-from collections import deque
 from bs4 import BeautifulSoup
+from collections import deque
+from collections import Counter
+from suds.client import Client
+import csv
+import logging
+import operator
+import time
+import suds
+import sys
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
@@ -95,10 +97,10 @@ def cocitation_with (	query, 		#queryClient
 						count_cr):	#max num of author that is cocited with input to be considered
 									# count_** is maximum value, because repetition is usual
 	pair_list = []
-	userQuery = 'AU='+authorName #query that is used to search database
-	fRecord = 1; #from which record the function should start searching from
-	sortField = { 'name':'TC', 'sort':'D'} #how the result is sorted (TC=times cited, D= descending)
-	option = { 'key':'RecordIDs', 'value':'On',} #what optional value should be included in result
+	userQuery = 'AU='+authorName
+	fRecord = 1;
+	sortField = { 'name':'TC', 'sort':'D'}
+	option = { 'key':'RecordIDs', 'value':'On',}
 
 	#search is called from query
 	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': [editions,], 'symbolicTimeSpan': symbolicTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
@@ -106,8 +108,8 @@ def cocitation_with (	query, 		#queryClient
 		print "No Search Result for " + authorName
 		return pair_list
 
+	#BeautifulSoup is used to retrieve the title of the work from full records text
 	searchTitle = BeautifulSoup(search_result.records, "xml")
-
 	title_list1 = deque()
 	for t in searchTitle.find_all(type="item"):
 		title_list1.append(t.string)
@@ -123,7 +125,6 @@ def cocitation_with (	query, 		#queryClient
 			continue
 
 		citingTitle = BeautifulSoup(citing_result.records, "xml")
-	
 		title_list2 = deque()
 		for t in citingTitle.find_all(type="item"):
 			title_list2.append(t.string)
@@ -140,16 +141,20 @@ def cocitation_with (	query, 		#queryClient
 
 			for z in cited_result.references:
 				try:
-					pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(", ",","), 'inputWork':str(x_title).upper(), 'citingWork':str(y_title).upper(), 'outputWork':z.citedTitle.upper()})
+					#if inputWork and outputWork is the same, skip
+					if cmp(str(x_title).upper(),z.citedTitle.upper()) == 0:
+						continue
+					#first author should be alphabetically before the second author
+					elif cmp(authorName.upper(), z.citedAuthor.upper().replace(", ",",")) < 0:
+						pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(", ",","), 'inputWork':str(x_title).upper(), 'citingWork':str(y_title).upper(), 'outputWork':z.citedTitle.upper()})
+					elif cmp(authorName.upper(), z.citedAuthor.upper().replace(", ",",")) > 0:
+						pair_list.append({'input':z.citedAuthor.upper().replace(", ",","), 'output':authorName.upper(), 'inputWork':str(x_title).upper(), 'citingWork':str(y_title).upper(), 'outputWork':z.citedTitle.upper()})
 				except AttributeError:
 					pass
 
-	#if output and input is the same, remove it as that is unnecessary tuple
-	for x in pair_list:
-		if x['input'] == x['output']:
-			pair_list.remove({'input':x['input'], 'output':x['output'], 'inputWork':x['inputWork'], 'citingWork':x['citingWork'],'outputWork':x['outputWork']})
 	return pair_list
 
+#count the number of the co-citation between the two authors
 def list_count (pair_list):
 	new_list = []
 	for x in pair_list:
@@ -158,34 +163,30 @@ def list_count (pair_list):
 			continue
 		new = 1
 		for y in new_list:
-			if x['input'] == y['input'] and x['output'] == y['output']:
+			if cmp(x['input'],y['input']) == 0 and cmp(x['output'],y['output']) == 0:
 				y['count'] = y['count'] +1
 				y['reference'].append({'inputWork':x['inputWork'],'citingWork':x['citingWork'],'outputWork':x['outputWork']})
 				new = 0
 				break
 		if new == 1:
 			new_list.append({'input':x['input'], 'output':x['output'], 'count':1, 'reference':[{'inputWork':x['inputWork'],'citingWork':x['citingWork'],'outputWork':x['outputWork']},]})
-		new_list = sorted(new_list,key=lambda tuples: (tuples['count']*-1, tuples['output']))
+	new_list = sorted(new_list,key=lambda tuples: (tuples['count']*-1, tuples['input'], tuples['output']))
 	return new_list
 
-def duplicate_check_prepare (pair_list):
-	for x in pair_list:
-		if cmp(x['input'],x['output']) > 0:
-			y = x['input']
-			x['input'] = x['output']
-			x['output'] = y
-		if cmp(x['inputWork'],x['outputWork']) == 0:
-				pair_list.remove({'input':x['input'], 'output':x['output'], 'inputWork':x['inputWork'], 'citingWork':x['citingWork'],'outputWork':x['outputWork']})
-	pair_list = sorted(pair_list,key=lambda tuples: (tuples['input'], tuples['output']))
-	return pair_list
-
+#remove any duplicate from the list before counting
 def duplicate_reference (pair_list):
-	#for x in pair_list:
-	#	for z in x['reference']:
-	#		if cmp(z['inputWork'],z['outputWork']) == 0:
-	#			print x['input'] + " : " + x['output'] + " | " + z['inputWork']
-	return pair_list
-
+	pair_list = sorted(pair_list,key=lambda tuples: (tuples['input'], tuples['output'],tuples['inputWork'],tuples['citingWork'],tuples['outputWork']))
+	new_list = []
+	for x in pair_list:
+		if len(new_list) == 0:
+			last = x
+			new_list.append(last)
+			continue
+		if x == last:
+			continue
+		last = x
+		new_list.append(last)
+	return new_list
 
 #--------------------
 #MAIN STARTS HERE
@@ -205,13 +206,14 @@ def main(argv):
 	total_list = []
 	
 	
-	if len(argv) != 3:
+	if len(argv) != 4:
 		print "Error: Not Enough Argument"
 		sys.exit(2)
 	
 	authorNames.append(argv[0])
 	inputfile =  argv[1]
-	outputfile = argv[2]
+	outputfile1 = argv[2]
+	outputfile2 = argv[3]
 
 	try:
 		f = open(inputfile,'r')
@@ -255,32 +257,42 @@ def main(argv):
 
 		authorName = authorNames.popleft()
 
-		print "Name: " + authorName
-
 		#instance of Query created
 		query = Query(authentication.SID)
 		
 		#explanation of arguments are done in the actual function itself
 		pair_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
 		
+		#complete list of co-citation
 		total_list = total_list + pair_list
 
-		#print output
+		#to find the next author to search co-citation for
+		pair_list = duplicate_reference(pair_list)
 		count_list = list_count(pair_list)
 
 		doneNames.append(authorName)
 
+		#find next possible author for search based on the number of co-citation they have from current search
 		for x in count_list:
-			duplicate = False
+			induplicate = False
+			outduplicate = False
 			for y in authorNames:
+				if y == x['input']:
+					induplicate = True
 				if y == x['output']:
-					duplicate = True
+					outduplicate = True
+				if induplicate == True and outduplicate == True:
 					break
 			for z in doneNames:
+				if z == x['input']:
+					induplicate = True
 				if z == x['output']:
-					duplicate = True
+					outduplicate = True
+				if induplicate == True and outduplicate == True:
 					break
-			if duplicate == False:
+			if induplicate == False:
+				authorNames.append(x['input'])
+			if outduplicate == False:
 				authorNames.append(x['output'])
 			if len(doneNames) + len(authorNames) >= numAuthor:
 				break
@@ -291,29 +303,36 @@ def main(argv):
 	#closing session before program exits
 	authentication.closeSession()
 
-	for k in total_list:
-		print k['input'] + " " + k['output'] + " | " + k['inputWork'] + " | " + k['citingWork'] + " | " + k['outputWork']
-
-	total_list = duplicate_check_prepare(total_list)
-	#for z in total_list:
-		#print z['input'] + " | " + z['output'] + " | " + z['inputWork'] + " | " + z['citingWork'] + " | " + z['outputWork']
-
+	#duplicate removal needed based on the reference		
+	total_list = duplicate_reference(total_list)
+	#counting the number of co-citation for the final statistics
 	total_list = list_count(total_list)
 
-	#duplicate removal needed based on the reference		
-
-	#total_list = duplicate_reference(total_list)
-
+	authorList=[]
+	kcount = 0
 	for k in total_list:
-		print k['input'] + " " + k['output'] 
-		for g in k['reference']:
-			print g['inputWork'] + " | " + g['citingWork'] + " | " + g['outputWork']
+		for x in range(0,k['count']):
+			authorList.append(k['input'])
+			authorList.append(k['output'])
+		kcount = kcount + k['count']
+		#prints all the reference with the two authors (debugging purpose)
+		#print k['input'] + " " + k['output'] + " " + str(k['count'])
+		#for g in k['reference']:
+		#	print g['inputWork'] + " | " + g['citingWork'] + " | " + g['outputWork']
+	
+	print "Total Number of Co-citation: " + str(kcount)
+	alc = Counter(authorList)
+	alc_sorted = sorted(alc.items(),key=lambda(k,v):(-v,k))
 
-
-	with open(outputfile+".csv",'ab') as f:
+	with open(outputfile2+".csv",'ab') as f:
 		writer = csv.writer(f, quoting=csv.QUOTE_NONNUMERIC)
+		for key, value in alc_sorted:
+			writer.writerow([str(key),str(value)])
+
+	with open(outputfile1+".csv",'ab') as g:
+		writer1 = csv.writer(g, quoting=csv.QUOTE_NONNUMERIC)
 		for row in total_list:
-			writer.writerow([row['input'],row['output'],row['count']])
+			writer1.writerow([row['input'],row['output'],row['count']])
 	
 if __name__ == "__main__":
 	main(sys.argv[1:])
