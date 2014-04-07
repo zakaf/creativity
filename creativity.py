@@ -47,14 +47,14 @@ class Authenticate (object):
 		self.SID = None
 	def authenticateSession (self):
 		try:
-			time.sleep(0.6)
+			time.sleep(0.5)
 			self.SID = self.client.service.authenticate()
 		except suds.WebFault, e:
 			print e
 			sys.exit()	
 	def closeSession (self):
 		try:	
-			time.sleep(0.6)
+			time.sleep(0.5)
 			self.SID = self.client.service.authenticate()
 			self.client.service.closeSession()
 		except suds.WebFault, e:
@@ -66,21 +66,21 @@ class Query (object):
 		self.client = Client(queryUrl)
 		self.client.set_options(headers={'Cookie':"SID=\""+str(SID)+"\""})
 	def search (self, queryParameters, retrieveParameters):
-		time.sleep(0.6)
+		time.sleep(0.5)
 		try:
 			result = self.client.service.search(queryParameters,retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
 	def citingArticles (self, databaseId, uid, editions, timeSpan, language, retrieveParameters):
-		time.sleep(0.6)
+		time.sleep(0.5)
 		try:
 			result = self.client.service.citingArticles( databaseId, uid, editions, timeSpan, language, retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
 	def citedReferences (self, databaseId, uid, language, retrieveParameters):
-		time.sleep(0.6)
+		time.sleep(0.5)
 		try:
 			result = self.client.service.citedReferences(databaseId,uid,language,retrieveParameters)
 			return result
@@ -347,7 +347,6 @@ def main(argv):
 	with open(outputfile2+".csv",'ab') as f:
 		writer = UnicodeWriter(f, quoting=csv.QUOTE_NONNUMERIC)
 		for key, value in alc_sorted:
-			print key + " " + str(value)
 			writer.writerow([key.decode('utf-8'),str(value)])
 
 	with open(outputfile1+".csv",'ab') as g:
