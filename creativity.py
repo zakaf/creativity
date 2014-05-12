@@ -31,6 +31,7 @@ import operator
 import time
 import suds
 import sys
+import re
 
 #setting debugging output level
 logging.basicConfig(level=logging.INFO)
@@ -100,6 +101,7 @@ def cocitation_with (	query, 		#queryClient
 						count_cr):	#max num of author that is cocited with input to be considered
 									# count_** is maximum value, because repetition is usual
 	pair_list = []
+	location_list = []
 	userQuery = 'AU='+authorName
 	fRecord = 1;
 	sortField = { 'name':'TC', 'sort':'D'}
@@ -114,8 +116,34 @@ def cocitation_with (	query, 		#queryClient
 	#BeautifulSoup is used to retrieve the title of the work from full records text
 	searchTitle = BeautifulSoup(search_result.records, "xml")
 	title_list1 = deque()
+
 	for t in searchTitle.find_all(type="item"):
 		title_list1.append(t.string)
+
+	for t in searchTitle.find_all("reprint_contact"):
+		if t("wos_standard") == []:
+			continue
+		else:
+			lname = (t("wos_standard"))[0].string
+			if t("city") == []:
+				lcity = ""
+			else:
+				lcity = (t("city"))[0].string
+			if t("state") == []:
+				lstate = ""
+			else:
+				lstate = (t("state"))[0].string
+			if t("country") == []:
+				lcountry = ""
+			else:
+				lcountry = (t("country"))[0].string
+			if t("zip") == []:
+				lzip = ""
+			else:
+				lzip = (t("zip"))[0].string
+			if lcity == "" and lstate == "" and lcountry == "" and lzip == "":
+				continue
+			location_list.append({'name': lname, 'city': lcity, 'state': lstate, 'country': lcountry, 'zip': lzip})
 
 	#citingAriticles is called from query
 	for x in search_result.optionValue[0].value:
@@ -132,6 +160,31 @@ def cocitation_with (	query, 		#queryClient
 		for t in citingTitle.find_all(type="item"):
 			title_list2.append(t.string)
 
+		for t in citingTitle.find_all("reprint_contact"):
+			if t("wos_standard") == []:
+				continue
+			else:
+				lname = (t("wos_standard"))[0].string
+				if t("city") == []:
+					lcity = ""
+				else:
+					lcity = (t("city"))[0].string
+				if t("state") == []:
+					lstate = ""
+				else:
+					lstate = (t("state"))[0].string
+				if t("country") == []:
+					lcountry = ""
+				else:
+					lcountry = (t("country"))[0].string
+				if t("zip") == []:
+					lzip = ""
+				else:
+					lzip = (t("zip"))[0].string
+				if lcity == "" and lstate == "" and lcountry == "" and lzip == "":
+					continue
+				location_list.append({'name': lname, 'city': lcity, 'state': lstate, 'country': lcountry, 'zip': lzip})
+
 		#citedReferences is called from query
 		for y in citing_result.optionValue[0].value:
 			
@@ -141,7 +194,7 @@ def cocitation_with (	query, 		#queryClient
 			
 			if len(cited_result.references) == 0:
 				continue
-
+		
 			for z in cited_result.references:
 				try:
 					#if inputWork and outputWork is the same, skip
@@ -155,6 +208,7 @@ def cocitation_with (	query, 		#queryClient
 				except AttributeError:
 					pass
 
+	print location_list
 	return pair_list
 
 #count the number of the co-citation between the two authors
@@ -231,7 +285,7 @@ def main(argv):
 	
 	
 	if len(argv) != 4:
-		print "Error: Not Enough Argument"
+		print "Sample Usage: creativity inputAuthor inputSettingFileName outputFileName1 outputFileName2"
 		sys.exit(2)
 	
 	authorNames.append(argv[0])
@@ -340,7 +394,7 @@ def main(argv):
 			authorList.append(unicode(k['output']).encode('utf-8'))
 		kcount = kcount + k['count']
 	
-	print "Total Number of Co-citation: " + str(kcount)
+	print "Total Number of Co-citations Recorded: " + str(kcount)
 	alc = Counter(authorList)
 	alc_sorted = sorted(alc.items(),key=lambda(k,v):(-v,k))
 
