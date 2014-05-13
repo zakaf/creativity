@@ -208,8 +208,7 @@ def cocitation_with (	query, 		#queryClient
 				except AttributeError:
 					pass
 
-	print location_list
-	return pair_list
+	return (pair_list,location_list)
 
 #count the number of the co-citation between the two authors
 def list_count (pair_list):
@@ -282,6 +281,7 @@ def main(argv):
 	count_cr = 2
 	numAuthor = 1
 	total_list = []
+	total_location_list = []
 	
 	
 	if len(argv) != 4:
@@ -339,10 +339,11 @@ def main(argv):
 		query = Query(authentication.SID)
 		
 		#explanation of arguments are done in the actual function itself
-		pair_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
+		pair_list,location_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
 		
-		#complete list of co-citation
+		#complete list of co-citation and location
 		total_list = total_list + pair_list
+		total_location_list = total_location_list + location_list
 
 		#to find the next author to search co-citation for
 		pair_list = duplicate_reference(pair_list)
@@ -407,6 +408,7 @@ def main(argv):
 		writer1 = UnicodeWriter(g, quoting=csv.QUOTE_NONNUMERIC)
 		for row in total_list:
 			writer1.writerow([row['input'],row['output'],str(row['count'])])
+	print total_location_list
 	
 if __name__ == "__main__":
 	main(sys.argv[1:])

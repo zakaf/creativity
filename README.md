@@ -159,6 +159,10 @@ April 4, 2014 ~ April 5, 2014
 April 6, 2014
 * All the csv output is in UTF-8 to prevent any error rising from unicode to ascii conversion. (due to authors with their name written in their native language, not in english alphabet)
 
+May 13, 2014
+* Location data is collected from Web of Science and they are saved to a list
+* Database implementation is starting
+
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
