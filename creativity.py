@@ -24,6 +24,7 @@
 from bs4 import BeautifulSoup
 from collections import deque
 from collections import Counter
+from peewee import *
 from suds.client import Client
 import csv, codecs, cStringIO
 import logging
@@ -40,6 +41,44 @@ logging.getLogger('suds.client').setLevel(logging.NOTSET)
 #url of wsdl files of web of science
 authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl'
 queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
+
+#database configuration
+DATABASE = 'creativity.db'
+database = SqliteDatabase(DATABASE)
+
+#database using peewee
+#model defintion of database
+class BaseModel(Model):
+	class Meta:
+		database = database
+
+class Author(BaseModel):
+	aid = PrimaryKeyField()
+	name = CharField()
+
+class Work(BaseModel):
+	wid = PrimaryKeyField()
+	title = CharField()
+
+class AuthorWork(BaseModel):
+	aid = ForeignKeyField(Author, related_name='authorWork')
+	wid = ForeignKeyField(Work, related_name='authorWork')
+
+class Address(BaseModel):
+	aid = ForeignKeyField(Author, related_name='authorAddress')
+	city = CharField()
+	state = CharField()
+	country = CharField()
+	zipcode = CharField()
+
+class cocitation(BaseModel):
+	inputAid = ForeignKeyField(Author, related_name='inputAuthor')
+	citingAid = ForeignKeyField(Author, related_name='citingAuthor')
+	citedAid = ForeignKeyField(Author, related_name='citedAuthor')
+	inputWid = ForeignKeyField(Work, related_name='inputWork')
+	citingWid = ForeignKeyField(Work, related_name='citingWork')
+	citedWid = ForeignKeyField(Work, related_name='citedWork')
+	
 
 #class for authenticating and closing session
 class Authenticate (object):

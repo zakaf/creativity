@@ -20,6 +20,9 @@ SUDS - python library for SOAP
 BeautifulSoup4 - python library for XML/HTML
 * In order to use BeautifulSoup4, <code>apt-get install python-bs4</code>
 
+Peewee - database orm for python
+* In order to ues peewee, <code>pip install peewee</code>
+
 For ease of use, create a command, "creativity", that will run creativity.py
 * To make this command available to all users:
 
