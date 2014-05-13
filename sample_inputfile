@@ -11,7 +11,7 @@ en
 #search limit
 2
 #citingArticles limit
-5
+2
 #citedReferences limit
 2
 #Number of authors to recursively search for (minimum 1)

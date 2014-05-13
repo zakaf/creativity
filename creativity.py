@@ -71,7 +71,7 @@ class Address(BaseModel):
 	country = CharField()
 	zipcode = CharField()
 
-class cocitation(BaseModel):
+class Cocitation(BaseModel):
 	inputAid = ForeignKeyField(Author, related_name='inputAuthor')
 	citingAid = ForeignKeyField(Author, related_name='citingAuthor')
 	citedAid = ForeignKeyField(Author, related_name='citedAuthor')
@@ -323,14 +323,20 @@ def main(argv):
 	total_location_list = []
 	
 	
-	if len(argv) != 4:
-		print "Sample Usage: creativity inputAuthor inputSettingFileName outputFileName1 outputFileName2"
+	if len(argv) < 2:
+		print "Sample Usage: creativity inputAuthor inputSettingFileName ?outputFileName1 ?outputFileName2"
 		sys.exit(2)
 	
 	authorNames.append(argv[0])
 	inputfile =  argv[1]
-	outputfile1 = argv[2]
-	outputfile2 = argv[3]
+	if len(argv) >= 3:
+		outputfile1 = argv[2]
+	else:
+		outputfile1 = ""
+	if len(argv) >= 4:
+		outputfile2 = argv[3]
+	else:
+		outputfile2 = ""
 
 	try:
 		f = open(inputfile,'r')
@@ -438,16 +444,41 @@ def main(argv):
 	alc = Counter(authorList)
 	alc_sorted = sorted(alc.items(),key=lambda(k,v):(-v,k))
 
-	with open(outputfile2+".csv",'ab') as f:
-		writer = UnicodeWriter(f, quoting=csv.QUOTE_NONNUMERIC)
-		for key, value in alc_sorted:
-			writer.writerow([key.decode('utf-8'),str(value)])
+	if outputfile2 != "":
+		with open(outputfile2+".csv",'ab') as f:
+			writer = UnicodeWriter(f, quoting=csv.QUOTE_NONNUMERIC)
+			for key, value in alc_sorted:
+				writer.writerow([key.decode('utf-8'),str(value)])
 
-	with open(outputfile1+".csv",'ab') as g:
-		writer1 = UnicodeWriter(g, quoting=csv.QUOTE_NONNUMERIC)
-		for row in total_list:
-			writer1.writerow([row['input'],row['output'],str(row['count'])])
-	print total_location_list
+	if outputfile1 != "":
+		with open(outputfile1+".csv",'ab') as g:
+			writer1 = UnicodeWriter(g, quoting=csv.QUOTE_NONNUMERIC)
+			for row in total_list:
+				writer1.writerow([row['input'],row['output'],str(row['count'])])
+
+	#database connection
+	database.connect()
+
+	#create required tables if it doesn't exist
+	Author.create_table(fail_silently=True)
+	Work.create_table(fail_silently=True)
+	AuthorWork.create_table(fail_silently=True)
+	Address.create_table(fail_silently=True)
+	Cocitation.create_table(fail_silently=True)
+	
+	#store author information
+	for x in authorList:
+		try:
+			Author.get(Author.name==x)
+		except Author.DoesNotExist:
+			Author.create(name=x)
+	#store work information
+	
+#	for x in Author.select():
+#		print x.name,x.aid
+
+	#database connection closed
+	database.close()
 	
 if __name__ == "__main__":
 	main(sys.argv[1:])
