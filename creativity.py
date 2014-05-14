@@ -180,7 +180,7 @@ def cocitation_with (	query, 		#queryClient
 				lzip = (t("zip"))[0].string
 			if lcity == "" and lstate == "" and lcountry == "" and lzip == "":
 				continue
-			location_list.append({'name': lname, 'city': lcity, 'state': lstate, 'country': lcountry, 'zip': lzip})
+			location_list.append({'name': lname.upper().replace(", ",","), 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper(), 'zip': lzip.upper()})
 
 	#citingAriticles is called from query
 	for x in search_result.optionValue[0].value:
@@ -220,7 +220,7 @@ def cocitation_with (	query, 		#queryClient
 					lzip = (t("zip"))[0].string
 				if lcity == "" and lstate == "" and lcountry == "" and lzip == "":
 					continue
-				location_list.append({'name': lname, 'city': lcity, 'state': lstate, 'country': lcountry, 'zip': lzip})
+				location_list.append({'name': lname.upper().replace(", ",","), 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper(), 'zip': lzip.upper()})
 
 		#citedReferences is called from query
 		for y in citing_result.optionValue[0].value:
@@ -517,14 +517,26 @@ def main(argv):
 									citingWork=Work.get(Work.title==y['citingWork']), 
 									citedRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
 	
-#	for x in Author.select():
-#		print x.author,x.name
-#	for x in Work.select():
-#		print x.work,x.title
-#	for x in AuthorWork.select():
-#		print x.relationship,x.author.name,x.work.title
-#	for x in Cocitation.select():
-#		print x.inputRelationship.author.name,x.citingWork.title,x.citedRelationship.author.name
+	for x in total_location_list:
+		try:
+			Address.get(Address.author==Author.get(Author.name==x['name']), Address.city==x['city'], Address.state==x['state'], Address.country==x['country'], Address.zipcode==x['zip'])
+		except Address.DoesNotExist:
+			Address.create(author=Author.get(Author.name==x['name']), city=x['city'], state=x['state'], country=x['country'], zipcode=x['zip'])
+		except Author.DoesNotExist:
+			curr_author = Author.create(name=x['name'])
+			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'], zipcode=x['zip'])
+			
+			
+	for x in Author.select():
+		print x.author,x.name
+	for x in Work.select():
+		print x.work,x.title
+	for x in AuthorWork.select():
+		print x.relationship,x.author.name,x.work.title
+	for x in Cocitation.select():
+		print x.inputRelationship.author.name,x.citingWork.title,x.citedRelationship.author.name
+	for x in Address.select():
+		print x.author.name,x.city,x.state,x.country,x.zipcode
 
 	#database connection closed
 	database.close()

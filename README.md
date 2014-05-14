@@ -5,7 +5,7 @@ Creativity Web targets to investigate a network of creative scientists in differ
 
 Before Using the Program
 ----------
-IP address has to be registered at the web of science server and granted access to its premium service, not its lite service
+IP address has to be registered to the web of science server and granted access to its premium service, not its lite service
 * If your computer is connected to UCLA network or UCLA VPN, it has already been pre-registered
 * access can be requested through [web of science](http://wokinfo.com/scientific/info/terms-ws/), but its premium service is not guranteed
 
@@ -35,10 +35,12 @@ For ease of use, create a command, "creativity", that will run creativity.py
 How to Use
 -----------
 Command should look like the following:
+
 1) If you want to update the database and see the current query result
 *	<code> creativity inputAuthor intputFileName outputFileName1 outputFileName2</code>
 *	ex) <code> creativity Bilder,R sampleinputfile output1 output2</code>
 *	.csv extension will be automatically added by the program for the outputFileNames
+
 2) If you just want to update the database
 *	<code> creativity inputAuthor intputFileName</code>
 *	ex) <code> creativity Bilder,R sampleinputfile</code>
@@ -172,8 +174,8 @@ May 12, 2014
 * Database implementation has started
 
 May 13, 2014
-* Everything except address is correctly imported into sqlite database
-* tables are relatively simple, but storing more information is piece of cake
+* Everything is correctly imported into sqlite database from query (author, work, authorWork, Cocitation, Address)
+* tables are relatively simple, but storing more information is a piece of cake
 
 Known/Possible Bugs
 ----------
