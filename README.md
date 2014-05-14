@@ -35,9 +35,13 @@ For ease of use, create a command, "creativity", that will run creativity.py
 How to Use
 -----------
 Command should look like the following:
+1) If you want to update the database and see the current query result
 *	<code> creativity inputAuthor intputFileName outputFileName1 outputFileName2</code>
 *	ex) <code> creativity Bilder,R sampleinputfile output1 output2</code>
-*	.csv extension will be automatically added by the program for the outputFileName
+*	.csv extension will be automatically added by the program for the outputFileNames
+2) If you just want to update the database
+*	<code> creativity inputAuthor intputFileName</code>
+*	ex) <code> creativity Bilder,R sampleinputfile</code>
 
 Input file should look like the below with values changed:
 (For your reference, this repository has a sample file)
@@ -108,6 +112,7 @@ Function
 * All duplicates are removed from the output, so only unique co-citations are considered
 * The number of co-citation that each author is involved with is returned in the second file
 * The output is in csv file, so the output is platform independent and easily readable.
+* Query results are saved into a local database allowing for future use of the data
 
 Progress
 ----------
@@ -162,20 +167,24 @@ April 4, 2014 ~ April 5, 2014
 April 6, 2014
 * All the csv output is in UTF-8 to prevent any error rising from unicode to ascii conversion. (due to authors with their name written in their native language, not in english alphabet)
 
-May 13, 2014
+May 12, 2014
 * Location data is collected from Web of Science and they are saved to a list
-* Database implementation is starting
+* Database implementation has started
+
+May 13, 2014
+* Everything except address is correctly imported into sqlite database
+* tables are relatively simple, but storing more information is piece of cake
 
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 * (Possible) There have been few irregularity in returned data, so there might be error arising due to a lack of debugging. So if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
-* (Possible) There might be problem, when reading input, so please follow the instruction with input file
-* (has to be considered) web of science has two notations of the name. ex) Bilder,R and Bilder,Roberr However, the program is unable to detect that these two names refer to the same person.
+* (Possible) There might be problem, when reading irregular input, so please follow the instruction with input file
+* (has to be considered) web of science has multiple notations of the name. ex) Bilder,R & Bilder,Robert & Bilder,RM. However, it is unable to detect that these names refer to the same person.
 
 Future Goal
 ----------
-* Able to load data from previous search and continue with the search, so that data can add up
+* database query using previosuly saved data
 
 Contact
 ----------

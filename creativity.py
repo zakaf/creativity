@@ -43,7 +43,7 @@ authenticateUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthent
 queryUrl = 'http://search.webofknowledge.com/esti/wokmws/ws/WokSearch?wsdl'
 
 #database configuration
-DATABASE = 'creativity.db'
+DATABASE = 'database_creativity.db'
 database = SqliteDatabase(DATABASE)
 
 #database using peewee
@@ -53,31 +53,29 @@ class BaseModel(Model):
 		database = database
 
 class Author(BaseModel):
-	aid = PrimaryKeyField()
+	author = PrimaryKeyField()
 	name = CharField()
 
 class Work(BaseModel):
-	wid = PrimaryKeyField()
+	work = PrimaryKeyField()
 	title = CharField()
 
 class AuthorWork(BaseModel):
-	aid = ForeignKeyField(Author, related_name='authorWork')
-	wid = ForeignKeyField(Work, related_name='authorWork')
+	relationship = PrimaryKeyField()
+	author = ForeignKeyField(Author, related_name='authorWork')
+	work = ForeignKeyField(Work, related_name='authorWork')
 
 class Address(BaseModel):
-	aid = ForeignKeyField(Author, related_name='authorAddress')
+	author = ForeignKeyField(Author, related_name='authorAddress')
 	city = CharField()
 	state = CharField()
 	country = CharField()
 	zipcode = CharField()
 
 class Cocitation(BaseModel):
-	inputAid = ForeignKeyField(Author, related_name='inputAuthor')
-	citingAid = ForeignKeyField(Author, related_name='citingAuthor')
-	citedAid = ForeignKeyField(Author, related_name='citedAuthor')
-	inputWid = ForeignKeyField(Work, related_name='inputWork')
-	citingWid = ForeignKeyField(Work, related_name='citingWork')
-	citedWid = ForeignKeyField(Work, related_name='citedWork')
+	inputRelationship = ForeignKeyField(AuthorWork, related_name='inputRelationship')
+	citingWork = ForeignKeyField(Work, related_name='citingWork')
+	citedRelationship = ForeignKeyField(AuthorWork, related_name='citedRelationship')
 	
 
 #class for authenticating and closing session
@@ -427,6 +425,8 @@ def main(argv):
 	#closing session before program exits
 	authentication.closeSession()
 
+	t0 = time.time()
+
 	#duplicate removal needed based on the reference		
 	total_list = duplicate_reference(total_list)
 	#counting the number of co-citation for the final statistics
@@ -456,6 +456,8 @@ def main(argv):
 			for row in total_list:
 				writer1.writerow([row['input'],row['output'],str(row['count'])])
 
+	t1 = time.time()
+
 	#database connection
 	database.connect()
 
@@ -466,19 +468,74 @@ def main(argv):
 	Address.create_table(fail_silently=True)
 	Cocitation.create_table(fail_silently=True)
 	
-	#store author information
-	for x in authorList:
+	#store author, work, author-work relationship and cocitation information
+	for x in total_list:
+		#store author information
 		try:
-			Author.get(Author.name==x)
+			Author.get(Author.name==x['input'])
 		except Author.DoesNotExist:
-			Author.create(name=x)
-	#store work information
+			Author.create(name=x['input'])
+		try:
+			Author.get(Author.name==x['output'])
+		except Author.DoesNotExist:
+			Author.create(name=x['output'])
+		#store work information
+		for y in x['reference']:
+			try:
+				Work.get(Work.title==y['inputWork'])
+			except Work.DoesNotExist:
+				Work.create(title=y['inputWork'])
+			try:
+				Work.get(Work.title==y['citingWork'])
+			except Work.DoesNotExist:
+				Work.create(title=y['citingWork'])
+			try:
+				Work.get(Work.title==y['outputWork'])
+			except Work.DoesNotExist:
+				Work.create(title=y['outputWork'])
+
+			#store author-work information 
+			#i was trying to retreive author/work item using get() in the creation part, but a lot of errors are rising, so i'm using get again here
+			#i think it has to do with local variable scope, but assigning local variables outside of try/except still causes error, but different one.
+			#if large database causes a great time delay with such duplicate get, i will try to debug it.
+			try:
+				AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork']))
+			except AuthorWork.DoesNotExist:
+				AuthorWork.create(author=Author.get(Author.name==x['input']), work=Work.get(Work.title==y['inputWork']))
+			try:
+				AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork']))
+			except AuthorWork.DoesNotExist:
+				AuthorWork.create(author=Author.get(Author.name==x['output']), work=Work.get(Work.title==y['outputWork']))
+
+			#store cocitation information
+			try:
+				Cocitation.get(	Cocitation.inputRelationship==AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork'])), 
+								Cocitation.citingWork==Work.get(Work.title==y['citingWork']), 
+								Cocitation.citedRelationship==AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
+			except Cocitation.DoesNotExist:
+				Cocitation.create(	inputRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork'])), 
+									citingWork=Work.get(Work.title==y['citingWork']), 
+									citedRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
 	
 #	for x in Author.select():
-#		print x.name,x.aid
+#		print x.author,x.name
+#	for x in Work.select():
+#		print x.work,x.title
+#	for x in AuthorWork.select():
+#		print x.relationship,x.author.name,x.work.title
+#	for x in Cocitation.select():
+#		print x.inputRelationship.author.name,x.citingWork.title,x.citedRelationship.author.name
 
 	#database connection closed
 	database.close()
+
+	t2 = time.time()
+	# measures time for performance measure
+	print "---------TIME----------"
+	print "Calculation time"
+	print t1-t0
+	print "Database time"
+	print t2-t1
 	
 if __name__ == "__main__":
 	main(sys.argv[1:])
