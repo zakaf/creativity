@@ -53,15 +53,32 @@ class BaseModel(Model):
 		database = database
 
 class Author(BaseModel):
-	author = PrimaryKeyField()
 	name = CharField()
 
+	def cocitation_with(self):
+		AW1 = AuthorWork.alias()
+		AW2 = AuthorWork.alias()
+		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where((AW2.author == self) | (AW1.author == self))
+
+	def count_cocitation_with(self):
+		AW1 = AuthorWork.alias()
+		AW2 = AuthorWork.alias()
+		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where((AW2.author == self) | (AW1.author == self)).count()
+
+	def cocitation_together(self,second):
+		AW1 = AuthorWork.alias()
+		AW2 = AuthorWork.alias()
+		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where(((AW2.author == self) & (AW1.author == second)) | ((AW2.author == second) & (AW1.author == self)))
+	
+	def count_cocitation_together(self,second):
+		AW1 = AuthorWork.alias()
+		AW2 = AuthorWork.alias()
+		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where(((AW2.author == self) & (AW1.author == second)) | ((AW2.author == second) & (AW1.author == self))).count()
+		
 class Work(BaseModel):
-	work = PrimaryKeyField()
 	title = CharField()
 
 class AuthorWork(BaseModel):
-	relationship = PrimaryKeyField()
 	author = ForeignKeyField(Author, related_name='authorWork')
 	work = ForeignKeyField(Work, related_name='authorWork')
 
@@ -527,16 +544,23 @@ def main(argv):
 			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'], zipcode=x['zip'])
 			
 			
-	for x in Author.select():
-		print x.author,x.name
-	for x in Work.select():
-		print x.work,x.title
-	for x in AuthorWork.select():
-		print x.relationship,x.author.name,x.work.title
-	for x in Cocitation.select():
-		print x.inputRelationship.author.name,x.citingWork.title,x.citedRelationship.author.name
-	for x in Address.select():
-		print x.author.name,x.city,x.state,x.country,x.zipcode
+#	for x in Author.select():
+#		print x.name
+#	for x in Work.select():
+#		print x.title
+#	for x in AuthorWork.select():
+#		print x.author.name,x.work.title
+#	for x in Cocitation.select():
+#		print x.inputRelationship.author.name,x.citingWork.title,x.citedRelationship.author.name
+#	for x in Address.select():
+#		print x.author.name,x.city,x.state,x.country,x.zipcode
+	print "-------------------------"
+	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
+		print x.inputRelationship.author.name, x.citedRelationship.author.name
+	print Author.get(Author.name == "KAY,SR").count_cocitation_with()
+	for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
+		print x.inputRelationship.author.name, x.citedRelationship.author.name
+	print Author.get(Author.name == "KAY,SR").count_cocitation_together(Author.get(Author.name == "KANE,J"))
 
 	#database connection closed
 	database.close()

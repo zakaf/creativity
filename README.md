@@ -115,6 +115,7 @@ Function
 * The number of co-citation that each author is involved with is returned in the second file
 * The output is in csv file, so the output is platform independent and easily readable.
 * Query results are saved into a local database allowing for future use of the data
+* Local database allows retrieval operations including, but not limited to who the author has cocited with
 
 Progress
 ----------
@@ -176,6 +177,10 @@ May 12, 2014
 May 13, 2014
 * Everything is correctly imported into sqlite database from query (author, work, authorWork, Cocitation, Address)
 * tables are relatively simple, but storing more information is a piece of cake
+
+May 15, 2014
+* database now allows retrieval operations
+* database macro operations have been added (cocitation_with, count_cocitation_with, cocitation_together, count_cocitation_together)
 
 Known/Possible Bugs
 ----------
