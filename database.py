@@ -40,9 +40,7 @@ class Author(BaseModel):
 		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where((AW2.author == self) | (AW1.author == self))
 
 	def count_cocitation_with(self):
-		AW1 = AuthorWork.alias()
-		AW2 = AuthorWork.alias()
-		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where((AW2.author == self) | (AW1.author == self)).count()
+		return self.cocitation_with().count()
 
 	def cocitation_together(self,second):
 		AW1 = AuthorWork.alias()
@@ -50,12 +48,18 @@ class Author(BaseModel):
 		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where(((AW2.author == self) & (AW1.author == second)) | ((AW2.author == second) & (AW1.author == self)))
 	
 	def count_cocitation_together(self,second):
-		AW1 = AuthorWork.alias()
-		AW2 = AuthorWork.alias()
-		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where(((AW2.author == self) & (AW1.author == second)) | ((AW2.author == second) & (AW1.author == self))).count()
-		
+		return self.cocitation_together(second).count()		
+
 class Work(BaseModel):
 	title = CharField()
+
+	def cocitation_referenced(self):
+		AW1 = AuthorWork.alias()
+		AW2 = AuthorWork.alias()
+		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where((AW2.work == self) | (AW1.work == self))
+	
+	def count_cocitation_referenced(self):
+		return self.cocitation_referenced().count()
 
 class AuthorWork(BaseModel):
 	author = ForeignKeyField(Author, related_name='authorWork')
@@ -95,16 +99,24 @@ def main():
 #	for x in AuthorWork.select():
 #		print x.author.name,x.work.title
 #	for x in Cocitation.select():
-#		print x.inputRelationship.author.name,x.citingWork.title,x.citedRelationship.author.name
+#		print "---cocitation--"
+#		print x.inputRelationship.author.name,x.inputRelationship.work.title
+#		print x.citingWork.title
+#		print x.citedRelationship.author.name,x.citedRelationship.work.title
 #	for x in Address.select():
 #		print x.author.name,x.city,x.state,x.country,x.zipcode
 	print "-------------------------"
-	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
-		print x.inputRelationship.author.name, x.citedRelationship.author.name
+#	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
+#		print x.inputRelationship.author.name, x.citedRelationship.author.name
 	print Author.get(Author.name == "KAY,SR").count_cocitation_with()
-	for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
-		print x.inputRelationship.author.name, x.citedRelationship.author.name
+#	for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
+#		print x.inputRelationship.author.name, x.citedRelationship.author.name
 	print Author.get(Author.name == "KAY,SR").count_cocitation_together(Author.get(Author.name == "KANE,J"))
+#	for x in Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").cocitation_referenced():
+#		print "input: ", x.inputRelationship.work.title
+#		print "citing: ",x.citingWork.title
+#		print "output: ", x.citedRelationship.work.title
+	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
 
 	#database connection closed
 	database.close()
