@@ -144,7 +144,6 @@ Feb 25, 2014
 * now input author is not hard coded and accepts it as an arugment
 * settings is not hard coded and the file name of the settings file is accepted as an argument
 * the sample settings file is described above as well as how command should look like
-Feb 25, 2014 GOAL DONE
 
 March 30, 2014
 * Possible Graphical Representation library is being reviewed.
@@ -191,7 +190,9 @@ Known/Possible Bugs
 
 Future Goal
 ----------
-* database query using previosuly saved data
+* database operations
+* location based cocitation statistics ex) each city's cocitation statistics
+* which work is most referenced in cocitation statistics
 
 Contact
 ----------

@@ -108,14 +108,19 @@ def main():
 	print "-------------------------"
 #	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
 #		print x.inputRelationship.author.name, x.citedRelationship.author.name
-	print Author.get(Author.name == "KAY,SR").count_cocitation_with()
-#	for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
-#		print x.inputRelationship.author.name, x.citedRelationship.author.name
+	print "Number of Cocitation Bilder,R is involved with"
+	print Author.get(Author.name == "BILDER,R").count_cocitation_with()
+	#for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
+	#	print x.inputRelationship.author.name, x.citedRelationship.author.name
+	print "Number of cocitation KAY,SR and KANE,J is involved with together"
 	print Author.get(Author.name == "KAY,SR").count_cocitation_together(Author.get(Author.name == "KANE,J"))
-#	for x in Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").cocitation_referenced():
-#		print "input: ", x.inputRelationship.work.title
-#		print "citing: ",x.citingWork.title
-#		print "output: ", x.citedRelationship.work.title
+	
+	#for x in Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").cocitation_referenced():
+	#	print "input: ", x.inputRelationship.work.title
+	#	print "citing: ",x.citingWork.title
+	#	print "output: ", x.citedRelationship.work.title
+	#	print "--------"
+	print "Number of cocitation that NEUROCOGNITIVE ... ARE WE MEASURING THE \"RIGHT STUFF\"? is involed with as a input or output work"
 	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
 
 	#database connection closed
