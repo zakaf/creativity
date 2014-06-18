@@ -181,18 +181,22 @@ May 15, 2014
 * database now allows retrieval operations
 * database macro operations have been added (cocitation_with, count_cocitation_with, cocitation_together, count_cocitation_together)
 
+June 18, 2014
+* different formats of names are now formatted to last_name,first_name_initial ex) BILDER,R
+* email is retrieved and saved into the database
+
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 * (Possible) There have been few irregularity in returned data, so there might be error arising due to a lack of debugging. So if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
 * (Possible) There might be problem, when reading irregular input, so please follow the instruction with input file
-* (has to be considered) web of science has multiple notations of the name. ex) Bilder,R & Bilder,Robert & Bilder,RM. However, it is unable to detect that these names refer to the same person.
+* (Is this necessary) not all authors are going to have address and email address
 
 Future Goal
 ----------
-* database operations
-* location based cocitation statistics ex) each city's cocitation statistics
-* which work is most referenced in cocitation statistics
+* Number of work researcher published
+* Domain of the work?
+* date of location
 
 Contact
 ----------

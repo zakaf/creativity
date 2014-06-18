@@ -55,38 +55,12 @@ class BaseModel(Model):
 class Author(BaseModel):
 	name = CharField()
 
-	#find any cocitation that the current author is a part of (input | output)
-	def cocitation_with(self):
-		AW1 = AuthorWork.alias()
-		AW2 = AuthorWork.alias()
-		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where((AW2.author == self) | (AW1.author == self))
+class Email(BaseModel):
+	author = ForeignKeyField(Author, related_name='authorEmail')
+	email = CharField()
 
-	#count the number of cocitation that the current author is a part of (input | output)
-	def count_cocitation_with(self):
-		return self.cocitation_with().count()
-
-	#find any cocitation that the current author and second author is a part of (input | output)
-	def cocitation_together(self,second):
-		AW1 = AuthorWork.alias()
-		AW2 = AuthorWork.alias()
-		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where(((AW2.author == self) & (AW1.author == second)) | ((AW2.author == second) & (AW1.author == self)))
-	
-	#count the number of cocitation that the current author and second author is a part of (input | output)
-	def count_cocitation_together(self,second):
-		return self.cocitation_together(second).count()		
-		
 class Work(BaseModel):
 	title = CharField()
-
-	#find any cocitation that the current work is a part of (input | output)
-	def cocitation_referenced(self):
-		AW1 = AuthorWork.alias()
-		AW2 = AuthorWork.alias()
-		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where((AW2.work == self) | (AW1.work == self))
-	
-	#count the number of cocitation that the current work is a part of (input | output)
-	def count_cocitation_referenced(self):
-		return self.cocitation_referenced().count()
 
 class AuthorWork(BaseModel):
 	author = ForeignKeyField(Author, related_name='authorWork')
@@ -97,14 +71,12 @@ class Address(BaseModel):
 	city = CharField()
 	state = CharField()
 	country = CharField()
-	zipcode = CharField()
 
 class Cocitation(BaseModel):
 	inputRelationship = ForeignKeyField(AuthorWork, related_name='inputRelationship')
 	citingWork = ForeignKeyField(Work, related_name='citingWork')
 	citedRelationship = ForeignKeyField(AuthorWork, related_name='citedRelationship')
 	
-
 #class for authenticating and closing session
 class Authenticate (object):
 	def __init__ (self):
@@ -166,6 +138,7 @@ def cocitation_with (	query, 		#queryClient
 									# count_** is maximum value, because repetition is usual
 	pair_list = []
 	location_list = []
+	email_list = []
 	userQuery = 'AU='+authorName
 	fRecord = 1;
 	sortField = { 'name':'TC', 'sort':'D'}
@@ -181,14 +154,22 @@ def cocitation_with (	query, 		#queryClient
 	searchTitle = BeautifulSoup(search_result.records, "xml")
 	title_list1 = deque()
 
+	print "------searchTitle----"
+	print searchTitle.prettify()
+	print "-----------------"
+
 	for t in searchTitle.find_all(type="item"):
 		title_list1.append(t.string)
 
+	for t in searchTitle.find_all("name"):
+		if (t.find_all("email_addr") != []):
+			ename = (t("wos_standard"))[0].string.upper().replace(", ",",")
+			eemail = (t("email_addr"))[0].string
+			email_list.append({'name': trim_name(ename), 'email': eemail})
+
 	for t in searchTitle.find_all("reprint_contact"):
-		if t("wos_standard") == []:
-			continue
-		else:
-			lname = (t("wos_standard"))[0].string
+		if t("wos_standard") != []:
+			lname = trim_name((t("wos_standard"))[0].string.upper().replace(", ",","))
 			if t("city") == []:
 				lcity = ""
 			else:
@@ -201,13 +182,9 @@ def cocitation_with (	query, 		#queryClient
 				lcountry = ""
 			else:
 				lcountry = (t("country"))[0].string
-			if t("zip") == []:
-				lzip = ""
-			else:
-				lzip = (t("zip"))[0].string
-			if lcity == "" and lstate == "" and lcountry == "" and lzip == "":
+			if lcity == "" and lstate == "" and lcountry == "":
 				continue
-			location_list.append({'name': lname.upper().replace(", ",","), 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper(), 'zip': lzip.upper()})
+			location_list.append({'name': lname, 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper()})
 
 	#citingAriticles is called from query
 	for x in search_result.optionValue[0].value:
@@ -221,14 +198,25 @@ def cocitation_with (	query, 		#queryClient
 
 		citingTitle = BeautifulSoup(citing_result.records, "xml")
 		title_list2 = deque()
+
+		print "-----citingTitle_-----"
+		print citingTitle.prettify()
+		print "-----------"
+	
 		for t in citingTitle.find_all(type="item"):
 			title_list2.append(t.string)
+
+		for t in searchTitle.find_all("name"):
+			if (t.find_all("email_addr") != []):
+				ename = (t("wos_standard"))[0].string.upper().replace(", ",",")
+				eemail = (t("email_addr"))[0].string
+				email_list.append({'name': trim_name(ename), 'email': eemail})
 
 		for t in citingTitle.find_all("reprint_contact"):
 			if t("wos_standard") == []:
 				continue
 			else:
-				lname = (t("wos_standard"))[0].string
+				lname = trim_name((t("wos_standard"))[0].string.upper().replace(", ",","))
 				if t("city") == []:
 					lcity = ""
 				else:
@@ -241,13 +229,9 @@ def cocitation_with (	query, 		#queryClient
 					lcountry = ""
 				else:
 					lcountry = (t("country"))[0].string
-				if t("zip") == []:
-					lzip = ""
-				else:
-					lzip = (t("zip"))[0].string
-				if lcity == "" and lstate == "" and lcountry == "" and lzip == "":
+				if lcity == "" and lstate == "" and lcountry == "":
 					continue
-				location_list.append({'name': lname.upper().replace(", ",","), 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper(), 'zip': lzip.upper()})
+				location_list.append({'name': lname.upper().replace(", ",","), 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper()})
 
 		#citedReferences is called from query
 		for y in citing_result.optionValue[0].value:
@@ -261,18 +245,20 @@ def cocitation_with (	query, 		#queryClient
 		
 			for z in cited_result.references:
 				try:
+					author1_trimmed = authorName.upper()
+					author2_trimmed = trim_name(z.citedAuthor.upper().replace(", ",","))
 					#if inputWork and outputWork is the same, skip
 					if cmp(unicode(x_title).encode('utf-8').upper(),z.citedTitle.upper()) == 0:
 						continue
 					#first author should be alphabetically before the second author
-					elif cmp(authorName.upper(), z.citedAuthor.upper().replace(", ",",")) < 0:
-						pair_list.append({'input':authorName.upper(), 'output':z.citedAuthor.upper().replace(", ",","), 'inputWork':unicode(x_title).encode('utf-8').upper(), 'citingWork':unicode(y_title).encode('utf-8').upper(), 'outputWork':z.citedTitle.upper()})
-					elif cmp(authorName.upper(), z.citedAuthor.upper().replace(", ",",")) > 0:
-						pair_list.append({'input':z.citedAuthor.upper().replace(", ",","), 'output':authorName.upper(), 'inputWork':unicode(x_title).encode('utf-8').upper(), 'citingWork':unicode(y_title).encode('utf-8').upper(), 'outputWork':z.citedTitle.upper()})
+					elif cmp(author1_trimmed, author2_trimmed) < 0:
+						pair_list.append({'input': author1_trimmed, 'output': author2_trimmed, 'inputWork':unicode(x_title).encode('utf-8').upper(), 'citingWork':unicode(y_title).encode('utf-8').upper(), 'outputWork':z.citedTitle.upper()})
+					elif cmp(author1_trimmed, author2_trimmed) > 0:
+						pair_list.append({'output': author1_trimmed, 'input': author2_trimmed, 'outputWork':unicode(x_title).encode('utf-8').upper(), 'citingWork':unicode(y_title).encode('utf-8').upper(), 'inputWork':z.citedTitle.upper()})
 				except AttributeError:
 					pass
 
-	return (pair_list,location_list)
+	return (pair_list,location_list,email_list)
 
 #count the number of the co-citation between the two authors
 def list_count (pair_list):
@@ -309,9 +295,7 @@ def duplicate_reference (pair_list):
 	return new_list
 
 class UnicodeWriter:
-
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
-        # Redirect output to a queue
         self.queue = cStringIO.StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
         self.stream = f
@@ -319,15 +303,18 @@ class UnicodeWriter:
 
     def writerow(self, row):
         self.writer.writerow([s.encode("utf-8") for s in row])
-        # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
-        # ... and reencode it into the target encoding
         data = self.encoder.encode(data)
-        # write to the target stream
         self.stream.write(data)
-        # empty queue
         self.queue.truncate(0)
+
+def trim_name(name):
+	comma_location = name.find(',')
+	if comma_location == -1:
+		return name
+	return name[:(comma_location+2)]
+		
 
 #--------------------
 #MAIN STARTS HERE
@@ -346,7 +333,7 @@ def main(argv):
 	numAuthor = 1
 	total_list = []
 	total_location_list = []
-	
+	total_email_list = []
 	
 	if len(argv) < 2:
 		print "Sample Usage: creativity inputAuthor inputSettingFileName ?outputFileName1 ?outputFileName2"
@@ -370,7 +357,6 @@ def main(argv):
 	except IOError as e:
 		print "File I/O Eror"
 		sys.exit(1)
-	
 
 	for line in lines:
 		if line[0][0] == '#':
@@ -402,18 +388,18 @@ def main(argv):
 	authentication.authenticateSession()
 	
 	while True:	
-
 		authorName = authorNames.popleft()
 
 		#instance of Query created
 		query = Query(authentication.SID)
 		
 		#explanation of arguments are done in the actual function itself
-		pair_list,location_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
+		pair_list,location_list,email_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
 		
 		#complete list of co-citation and location
 		total_list = total_list + pair_list
 		total_location_list = total_location_list + location_list
+		total_email_list = total_email_list + email_list
 
 		#to find the next author to search co-citation for
 		pair_list = duplicate_reference(pair_list)
@@ -490,6 +476,7 @@ def main(argv):
 
 	#create required tables if it doesn't exist
 	Author.create_table(fail_silently=True)
+	Email.create_table(fail_silently=True)
 	Work.create_table(fail_silently=True)
 	AuthorWork.create_table(fail_silently=True)
 	Address.create_table(fail_silently=True)
@@ -536,48 +523,28 @@ def main(argv):
 
 			#store cocitation information
 			try:
-				Cocitation.get(	Cocitation.inputRelationship==AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork'])), 
-								Cocitation.citingWork==Work.get(Work.title==y['citingWork']), 
-								Cocitation.citedRelationship==AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
+				Cocitation.get(	Cocitation.inputRelationship==AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork'])), Cocitation.citingWork==Work.get(Work.title==y['citingWork']), Cocitation.citedRelationship==AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
 			except Cocitation.DoesNotExist:
-				Cocitation.create(	inputRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork'])), 
-									citingWork=Work.get(Work.title==y['citingWork']), 
-									citedRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
+				Cocitation.create(	inputRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork'])), citingWork=Work.get(Work.title==y['citingWork']), citedRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
 	
 	for x in total_location_list:
 		try:
-			Address.get(Address.author==Author.get(Author.name==x['name']), Address.city==x['city'], Address.state==x['state'], Address.country==x['country'], Address.zipcode==x['zip'])
+			Address.get(Address.author==Author.get(Author.name==x['name']), Address.city==x['city'], Address.state==x['state'], Address.country==x['country'])
 		except Address.DoesNotExist:
-			Address.create(author=Author.get(Author.name==x['name']), city=x['city'], state=x['state'], country=x['country'], zipcode=x['zip'])
+			Address.create(author=Author.get(Author.name==x['name']), city=x['city'], state=x['state'], country=x['country'])
 		except Author.DoesNotExist:
 			curr_author = Author.create(name=x['name'])
-			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'], zipcode=x['zip'])
+			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'])
+	
+	for x in total_email_list:
+		try:
+			Email.get(Email.author==Author.get(Author.name==x['name']), Email.email==x['email'])
+		except Email.DoesNotExist:
+			Email.create(author=Author.get(Author.name==x['name']), email=x['email'])
+		except Author.DoesNotExist:
+			curr_author = Author.create(name=x['name'])
+			Email.create(author=curr_author, email=x['email'])
 			
-			
-#	for x in Author.select():
-#		print x.name
-#	for x in Work.select():
-#		print x.title
-#	for x in AuthorWork.select():
-#		print x.author.name,x.work.title
-#	for x in Cocitation.select():
-#		print x.inputRelationship.author.name,x.citingWork.title,x.citedRelationship.author.name
-#	for x in Address.select():
-#		print x.author.name,x.city,x.state,x.country,x.zipcode
-#	print "-------------------------"
-#	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
-#		print x.inputRelationship.author.name, x.citedRelationship.author.name
-#	print Author.get(Author.name == "KAY,SR").count_cocitation_with()
-#	for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
-#		print x.inputRelationship.author.name, x.citedRelationship.author.name
-#	print Author.get(Author.name == "KAY,SR").count_cocitation_together(Author.get(Author.name == "KANE,J"))
-#	for x in Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").cocitation_referenced():
-#		print "input: ", x.inputRelationship.work.title
-#		print "citing: ",x.citingWork.title
-#		print "output: ", x.citedRelationship.work.title
-#	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
-
-
 	#database connection closed
 	database.close()
 

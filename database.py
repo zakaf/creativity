@@ -48,8 +48,15 @@ class Author(BaseModel):
 		return Cocitation.select().join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).where(((AW2.author == self) & (AW1.author == second)) | ((AW2.author == second) & (AW1.author == self)))
 	
 	def count_cocitation_together(self,second):
-		return self.cocitation_together(second).count()		
+		return self.cocitation_together(second).count()
 
+	def email_of_author(self):
+		return Email.select().where(Email.author == self)
+
+class Email(BaseModel):
+	author = ForeignKeyField(Author, related_name='authorEmail')
+	email = CharField()
+	
 class Work(BaseModel):
 	title = CharField()
 
@@ -70,7 +77,6 @@ class Address(BaseModel):
 	city = CharField()
 	state = CharField()
 	country = CharField()
-	zipcode = CharField()
 
 class Cocitation(BaseModel):
 	inputRelationship = ForeignKeyField(AuthorWork, related_name='inputRelationship')
@@ -104,7 +110,7 @@ def main():
 #		print x.citingWork.title
 #		print x.citedRelationship.author.name,x.citedRelationship.work.title
 #	for x in Address.select():
-#		print x.author.name,x.city,x.state,x.country,x.zipcode
+#		print x.author.name,x.city,x.state,x.country
 	print "-------------------------"
 #	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
 #		print x.inputRelationship.author.name, x.citedRelationship.author.name
@@ -122,6 +128,13 @@ def main():
 	#	print "--------"
 	print "Number of cocitation that NEUROCOGNITIVE ... ARE WE MEASURING THE \"RIGHT STUFF\"? is involed with as a input or output work"
 	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
+
+	print "Email of Bilder,R"
+	for x in Author.get(Author.name == "BILDER,R").email_of_author():
+		print x.email
+	print "All email"
+	for x in Email.select():
+		print x.email
 
 	#database connection closed
 	database.close()
