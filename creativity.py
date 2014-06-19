@@ -54,6 +54,7 @@ class BaseModel(Model):
 
 class Author(BaseModel):
 	name = CharField()
+	num_of_work = IntegerField(default = 0)
 
 class Email(BaseModel):
 	author = ForeignKeyField(Author, related_name='authorEmail')
@@ -124,11 +125,10 @@ class Query (object):
 		except suds.WebFault, e:
 			print e
 
+
 #Given input author, who is cocited with him
 def cocitation_with (	query, 		#queryClient 
 						authorName, #name of the input author
-						dbId, #database to search from
-						editions, 	#edition to search from
 						symbolicTimeSpan, #symbolic time span to search from
 						timeSpan, 	#actual time span to search from (choose symbolic or actual)
 						language, 	#queryLanguage
@@ -143,9 +143,20 @@ def cocitation_with (	query, 		#queryClient
 	fRecord = 1;
 	sortField = { 'name':'TC', 'sort':'D'}
 	option = { 'key':'RecordIDs', 'value':'On',}
+	dbId = 'WOS'
+	complete_editions = [	{'collection':'WOS', 'edition':'SCI'},
+							{'collection':'WOS', 'edition':'SSCI'},
+							{'collection':'WOS', 'edition':'AHCI'},
+							{'collection':'WOS', 'edition':'ISTP'},
+							{'collection':'WOS', 'edition':'ISSHP'},
+							{'collection':'WOS', 'edition':'IC'},
+							{'collection':'WOS', 'edition':'CCR'},
+							{'collection':'WOS', 'edition':'BSCI'},
+							{'collection':'WOS', 'edition':'BHCI'}]
 
 	#search is called from query
-	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': [editions,], 'symbolicTimeSpan': symbolicTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
+	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': complete_editions, 'symbolicTimeSpan': symbolicTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
+
 	if search_result.recordsFound == 0:
 		print "No Search Result for " + authorName
 		return pair_list
@@ -153,10 +164,6 @@ def cocitation_with (	query, 		#queryClient
 	#BeautifulSoup is used to retrieve the title of the work from full records text
 	searchTitle = BeautifulSoup(search_result.records, "xml")
 	title_list1 = deque()
-
-	print "------searchTitle----"
-	print searchTitle.prettify()
-	print "-----------------"
 
 	for t in searchTitle.find_all(type="item"):
 		title_list1.append(t.string)
@@ -191,7 +198,7 @@ def cocitation_with (	query, 		#queryClient
 
 		x_title = title_list1.popleft()
 
-		citing_result = query.citingArticles( dbId, x, [editions,], [timeSpan,], language, { 'firstRecord': fRecord, 'count': count_ca, 'sortField': [sortField,], 'viewField': None, 'option': [option,],})
+		citing_result = query.citingArticles( dbId, x, complete_editions, [timeSpan,], language, { 'firstRecord': fRecord, 'count': count_ca, 'sortField': [sortField,], 'viewField': None, 'option': [option,],})
 		
 		if citing_result.recordsFound == 0:
 			continue
@@ -199,10 +206,6 @@ def cocitation_with (	query, 		#queryClient
 		citingTitle = BeautifulSoup(citing_result.records, "xml")
 		title_list2 = deque()
 
-		print "-----citingTitle_-----"
-		print citingTitle.prettify()
-		print "-----------"
-	
 		for t in citingTitle.find_all(type="item"):
 			title_list2.append(t.string)
 
@@ -260,6 +263,27 @@ def cocitation_with (	query, 		#queryClient
 
 	return (pair_list,location_list,email_list)
 
+#return number of work an author has published
+def num_of_work (query, authorName, symbolicTimeSpan, timeSpan, language, count_s, count_ca, count_cr):	
+	userQuery = 'AU='+authorName
+	fRecord = 1;
+	sortField = { 'name':'TC', 'sort':'D'}
+	option = { 'key':'RecordIDs', 'value':'On',}
+	dbId = 'WOS'
+	complete_editions = [	{'collection':'WOS', 'edition':'SCI'},
+							{'collection':'WOS', 'edition':'SSCI'},
+							{'collection':'WOS', 'edition':'AHCI'},
+							{'collection':'WOS', 'edition':'ISTP'},
+							{'collection':'WOS', 'edition':'ISSHP'},
+							{'collection':'WOS', 'edition':'IC'},
+							{'collection':'WOS', 'edition':'CCR'},
+							{'collection':'WOS', 'edition':'BSCI'},
+							{'collection':'WOS', 'edition':'BHCI'}]
+
+	search_result = query.search({ 'databaseId': dbId, 'userQuery': userQuery, 'editions': complete_editions, 'symbolicTimeSpan': symbolicTimeSpan, 'timeSpan': [timeSpan,], 'queryLanguage': language, }, { 'firstRecord': fRecord, 'count': count_s, 'sortField': sortField, 'viewField': None, 'option': [option,],})
+
+	return search_result.recordsFound
+	
 #count the number of the co-citation between the two authors
 def list_count (pair_list):
 	new_list = []
@@ -322,8 +346,6 @@ def main(argv):
 	authorNames = deque([])
 	doneNames = []
 	skipCount =0
-	databaseId = 'WOS'
-	editions = { 'collection':'WOS', 'edition':'SCI', }
 	sTimeSpan = None
 	timeSpan = { 'begin':'1980-01-01', 'end':'2013-12-31', }
 	language = 'en'
@@ -363,22 +385,18 @@ def main(argv):
 			skipCount = skipCount+1
 		else:
 			if skipCount == 1:
-				databaseId = line.rstrip('\n')
-			elif skipCount == 2:
-				editions = { 'collection':databaseId, 'edition':line.rstrip('\n'), }
-			elif skipCount == 3:
 				timeSpan['begin'] = line.rstrip('\n')
-			elif skipCount == 4:
+			elif skipCount == 2:
 				timeSpan['end'] = line.rstrip('\n')
-			elif skipCount == 5:
+			elif skipCount == 3:
 				language = line.rstrip('\n')
-			elif skipCount == 6:
+			elif skipCount == 4:
 				count_search = line.rstrip('\n')
-			elif skipCount == 7:
+			elif skipCount == 5:
 				count_ca = line.rstrip('\n')
-			elif skipCount == 8:
+			elif skipCount == 6:
 				count_cr = line.rstrip('\n')
-			elif skipCount == 9:
+			elif skipCount == 7:
 				numAuthor = int(line.rstrip('\n'))
 			else:
 				break
@@ -394,7 +412,7 @@ def main(argv):
 		query = Query(authentication.SID)
 		
 		#explanation of arguments are done in the actual function itself
-		pair_list,location_list,email_list = cocitation_with(query, authorName, databaseId, editions, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
+		pair_list,location_list,email_list = cocitation_with(query, authorName, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
 		
 		#complete list of co-citation and location
 		total_list = total_list + pair_list
@@ -435,8 +453,6 @@ def main(argv):
 		if len(doneNames) == numAuthor:
 			break
 
-	#closing session before program exits
-	authentication.closeSession()
 
 	t0 = time.time()
 
@@ -488,11 +504,11 @@ def main(argv):
 		try:
 			Author.get(Author.name==x['input'])
 		except Author.DoesNotExist:
-			Author.create(name=x['input'])
+			Author.create(name=x['input'], num_of_work=num_of_work(query, x['input'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
 		try:
 			Author.get(Author.name==x['output'])
 		except Author.DoesNotExist:
-			Author.create(name=x['output'])
+			Author.create(name=x['output'], num_of_work=num_of_work(query, x['output'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
 		#store work information
 		for y in x['reference']:
 			try:
@@ -533,7 +549,7 @@ def main(argv):
 		except Address.DoesNotExist:
 			Address.create(author=Author.get(Author.name==x['name']), city=x['city'], state=x['state'], country=x['country'])
 		except Author.DoesNotExist:
-			curr_author = Author.create(name=x['name'])
+			curr_author = Author.create(name=x['name'], num_of_work=num_of_work(query, x['name'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
 			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'])
 	
 	for x in total_email_list:
@@ -542,18 +558,21 @@ def main(argv):
 		except Email.DoesNotExist:
 			Email.create(author=Author.get(Author.name==x['name']), email=x['email'])
 		except Author.DoesNotExist:
-			curr_author = Author.create(name=x['name'])
+			curr_author = Author.create(name=x['name'], num_of_work=num_of_work(query, x['name'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
 			Email.create(author=curr_author, email=x['email'])
 			
 	#database connection closed
 	database.close()
+
+	#closing session before program exits
+	authentication.closeSession()
 
 	t2 = time.time()
 	# measures time for performance measure
 	print "---------TIME----------"
 	print "Calculation time"
 	print t1-t0
-	print "Database time"
+	print "Database time (Including number of work query search time)"
 	print t2-t1
 	
 if __name__ == "__main__":

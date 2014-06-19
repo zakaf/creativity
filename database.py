@@ -33,6 +33,7 @@ class BaseModel(Model):
 
 class Author(BaseModel):
 	name = CharField()
+	num_of_work = IntegerField(default=0)
 
 	def cocitation_with(self):
 		AW1 = AuthorWork.alias()
@@ -98,8 +99,9 @@ def main():
 	Address.create_table(fail_silently=True)
 	Cocitation.create_table(fail_silently=True)
 	
-#	for x in Author.select():
-#		print x.name
+	print "--Authors--"
+	for x in Author.select():
+		print x.name,x.num_of_work
 #	for x in Work.select():
 #		print x.title
 #	for x in AuthorWork.select():
@@ -119,7 +121,7 @@ def main():
 	#for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
 	#	print x.inputRelationship.author.name, x.citedRelationship.author.name
 	print "Number of cocitation KAY,SR and KANE,J is involved with together"
-	print Author.get(Author.name == "KAY,SR").count_cocitation_together(Author.get(Author.name == "KANE,J"))
+	print Author.get(Author.name == "KAY,S").count_cocitation_together(Author.get(Author.name == "KANE,J"))
 	
 	#for x in Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").cocitation_referenced():
 	#	print "input: ", x.inputRelationship.work.title
@@ -129,10 +131,10 @@ def main():
 	print "Number of cocitation that NEUROCOGNITIVE ... ARE WE MEASURING THE \"RIGHT STUFF\"? is involed with as a input or output work"
 	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
 
-	print "Email of Bilder,R"
-	for x in Author.get(Author.name == "BILDER,R").email_of_author():
-		print x.email
-	print "All email"
+	#print "Email of Bilder,R"
+	#for x in Author.get(Author.name == "BILDER,R").email_of_author():
+	#	print x.email
+	print "--All email--"
 	for x in Email.select():
 		print x.email
 

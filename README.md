@@ -49,14 +49,6 @@ Input file should look like the below with values changed:
 (For your reference, this repository has a sample file)
 
 ----------
-\#databaseId:
-
-WOS
-
-\#editions:
-
-SCI
-
 \#timeSpan Begin
 
 1980-01-01
@@ -93,8 +85,6 @@ What each line means
 * The lines starting without '#' means that these are values
 
 Format and possible values:
-*	databaseId 		= values specified in the web of science guide
-*	editions 		= values specified in the web of science guide
 *	timeSpan Begin	= YYYY-MM-DD
 *	timeSpan End	= YYYY-MM-DD
 *	language 		= values specified in the web of science guide
@@ -185,6 +175,10 @@ June 18, 2014
 * different formats of names are now formatted to last_name,first_name_initial ex) BILDER,R
 * email is retrieved and saved into the database
 
+June 19, 2014
+* number of work that each author published in given time frame is stored
+* collection and editions are now set to be the entire WOS, not just SCI
+
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
@@ -194,7 +188,6 @@ Known/Possible Bugs
 
 Future Goal
 ----------
-* Number of work researcher published
 * Domain of the work?
 * date of location
 
