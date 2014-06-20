@@ -179,17 +179,19 @@ June 19, 2014
 * number of work that each author published in given time frame is stored
 * collection and editions are now set to be the entire WOS, not just SCI
 
+June 20, 2014
+* location and email now includes date information,so that the latest one can be tracked
+* Queries that have been searched are now saved into a database
+
 Known/Possible Bugs
 ----------
 * (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 * (Possible) There have been few irregularity in returned data, so there might be error arising due to a lack of debugging. So if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
-* (Possible) There might be problem, when reading irregular input, so please follow the instruction with input file
-* (Is this necessary) not all authors are going to have address and email address
+* (Is this necessary to be fixed?) not all authors are going to have address and email address
 
 Future Goal
 ----------
 * Domain of the work?
-* date of location
 
 Contact
 ----------

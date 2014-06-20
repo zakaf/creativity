@@ -57,6 +57,7 @@ class Author(BaseModel):
 class Email(BaseModel):
 	author = ForeignKeyField(Author, related_name='authorEmail')
 	email = CharField()
+	date = DateField()
 	
 class Work(BaseModel):
 	title = CharField()
@@ -78,11 +79,20 @@ class Address(BaseModel):
 	city = CharField()
 	state = CharField()
 	country = CharField()
+	date = DateField()
 
 class Cocitation(BaseModel):
 	inputRelationship = ForeignKeyField(AuthorWork, related_name='inputRelationship')
 	citingWork = ForeignKeyField(Work, related_name='citingWork')
 	citedRelationship = ForeignKeyField(AuthorWork, related_name='citedRelationship')
+
+class Queries(BaseModel):
+	author = CharField()
+	start = DateField()
+	end = DateField()
+	num_of_search = IntegerField()
+	num_of_citing = IntegerField()
+	num_of_cited = IntegerField()
 
 #--------------------
 #MAIN STARTS HERE
@@ -99,9 +109,9 @@ def main():
 	Address.create_table(fail_silently=True)
 	Cocitation.create_table(fail_silently=True)
 	
-	print "--Authors--"
-	for x in Author.select():
-		print x.name,x.num_of_work
+	#print "--Authors--"
+	#for x in Author.select():
+	#	print x.name,x.num_of_work
 #	for x in Work.select():
 #		print x.title
 #	for x in AuthorWork.select():
@@ -116,27 +126,35 @@ def main():
 	print "-------------------------"
 #	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
 #		print x.inputRelationship.author.name, x.citedRelationship.author.name
-	print "Number of Cocitation Bilder,R is involved with"
-	print Author.get(Author.name == "BILDER,R").count_cocitation_with()
+#	print "Number of Cocitation Bilder,R is involved with"
+#	print Author.get(Author.name == "BILDER,R").count_cocitation_with()
 	#for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
 	#	print x.inputRelationship.author.name, x.citedRelationship.author.name
-	print "Number of cocitation KAY,SR and KANE,J is involved with together"
-	print Author.get(Author.name == "KAY,S").count_cocitation_together(Author.get(Author.name == "KANE,J"))
+#	print "Number of cocitation KAY,SR and KANE,J is involved with together"
+#	print Author.get(Author.name == "KAY,S").count_cocitation_together(Author.get(Author.name == "KANE,J"))
 	
 	#for x in Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").cocitation_referenced():
 	#	print "input: ", x.inputRelationship.work.title
 	#	print "citing: ",x.citingWork.title
 	#	print "output: ", x.citedRelationship.work.title
 	#	print "--------"
-	print "Number of cocitation that NEUROCOGNITIVE ... ARE WE MEASURING THE \"RIGHT STUFF\"? is involed with as a input or output work"
-	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
+#	print "Number of cocitation that NEUROCOGNITIVE ... ARE WE MEASURING THE \"RIGHT STUFF\"? is involed with as a input or output work"
+#	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
 
 	#print "Email of Bilder,R"
 	#for x in Author.get(Author.name == "BILDER,R").email_of_author():
 	#	print x.email
 	print "--All email--"
 	for x in Email.select():
-		print x.email
+		print x.email, x.date
+
+	print "---All Address---"
+	for x in Address.select():
+		print x.city, x.state, x.country, x.date
+
+	print "---All Queries---"
+	for x in Queries.select():
+		print x.author, x.start, x.end, x.num_of_search, x.num_of_citing, x.num_of_cited
 
 	#database connection closed
 	database.close()

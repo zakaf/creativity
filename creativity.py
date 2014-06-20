@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#Copyright (c) 2014 Dongkeun Lee
+# Copyright (c) 2014 Dongkeun Lee
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -24,6 +24,7 @@
 from bs4 import BeautifulSoup
 from collections import deque
 from collections import Counter
+from datetime import datetime, date
 from peewee import *
 from suds.client import Client
 import csv, codecs, cStringIO
@@ -59,6 +60,7 @@ class Author(BaseModel):
 class Email(BaseModel):
 	author = ForeignKeyField(Author, related_name='authorEmail')
 	email = CharField()
+	date = DateField()
 
 class Work(BaseModel):
 	title = CharField()
@@ -72,11 +74,20 @@ class Address(BaseModel):
 	city = CharField()
 	state = CharField()
 	country = CharField()
+	date = DateField()
 
 class Cocitation(BaseModel):
 	inputRelationship = ForeignKeyField(AuthorWork, related_name='inputRelationship')
 	citingWork = ForeignKeyField(Work, related_name='citingWork')
 	citedRelationship = ForeignKeyField(AuthorWork, related_name='citedRelationship')
+
+class Queries(BaseModel):
+	author = CharField()
+	start = DateField()
+	end = DateField()
+	num_of_search = IntegerField()
+	num_of_citing = IntegerField()
+	num_of_cited = IntegerField()
 	
 #class for authenticating and closing session
 class Authenticate (object):
@@ -168,30 +179,33 @@ def cocitation_with (	query, 		#queryClient
 	for t in searchTitle.find_all(type="item"):
 		title_list1.append(t.string)
 
-	for t in searchTitle.find_all("name"):
-		if (t.find_all("email_addr") != []):
-			ename = (t("wos_standard"))[0].string.upper().replace(", ",",")
-			eemail = (t("email_addr"))[0].string
-			email_list.append({'name': trim_name(ename), 'email': eemail})
+	for x in searchTitle("REC"):
+		date_published = datetime.strptime(((x('pub_info'))[0])['sortdate'],"%Y-%m-%d").date()
 
-	for t in searchTitle.find_all("reprint_contact"):
-		if t("wos_standard") != []:
-			lname = trim_name((t("wos_standard"))[0].string.upper().replace(", ",","))
-			if t("city") == []:
-				lcity = ""
-			else:
-				lcity = (t("city"))[0].string
-			if t("state") == []:
-				lstate = ""
-			else:
-				lstate = (t("state"))[0].string
-			if t("country") == []:
-				lcountry = ""
-			else:
-				lcountry = (t("country"))[0].string
-			if lcity == "" and lstate == "" and lcountry == "":
-				continue
-			location_list.append({'name': lname, 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper()})
+		for t in x.find_all("name"):
+			if (t.find_all("email_addr") != []):
+				ename = (t("wos_standard"))[0].string.upper().replace(", ",",")
+				eemail = (t("email_addr"))[0].string
+				email_list.append({'name': trim_name(ename), 'email': eemail, 'date': date_published})
+	
+		for t in x.find_all("reprint_contact"):
+			if t("wos_standard") != []:
+				lname = trim_name((t("wos_standard"))[0].string.upper().replace(", ",","))
+				if t("city") == []:
+					lcity = ""
+				else:
+					lcity = (t("city"))[0].string
+				if t("state") == []:
+					lstate = ""
+				else:
+					lstate = (t("state"))[0].string
+				if t("country") == []:
+					lcountry = ""
+				else:
+					lcountry = (t("country"))[0].string
+				if lcity == "" and lstate == "" and lcountry == "":
+					continue
+				location_list.append({'name': lname, 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper(), 'date': date_published})
 
 	#citingAriticles is called from query
 	for x in search_result.optionValue[0].value:
@@ -208,33 +222,34 @@ def cocitation_with (	query, 		#queryClient
 
 		for t in citingTitle.find_all(type="item"):
 			title_list2.append(t.string)
-
-		for t in searchTitle.find_all("name"):
-			if (t.find_all("email_addr") != []):
-				ename = (t("wos_standard"))[0].string.upper().replace(", ",",")
-				eemail = (t("email_addr"))[0].string
-				email_list.append({'name': trim_name(ename), 'email': eemail})
-
-		for t in citingTitle.find_all("reprint_contact"):
-			if t("wos_standard") == []:
-				continue
-			else:
-				lname = trim_name((t("wos_standard"))[0].string.upper().replace(", ",","))
-				if t("city") == []:
-					lcity = ""
-				else:
-					lcity = (t("city"))[0].string
-				if t("state") == []:
-					lstate = ""
-				else:
-					lstate = (t("state"))[0].string
-				if t("country") == []:
-					lcountry = ""
-				else:
-					lcountry = (t("country"))[0].string
-				if lcity == "" and lstate == "" and lcountry == "":
-					continue
-				location_list.append({'name': lname.upper().replace(", ",","), 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper()})
+		
+		for x in citingTitle("REC"):
+			date_published = datetime.strptime(((x('pub_info'))[0])['sortdate'],"%Y-%m-%d").date()
+	
+			for t in x.find_all("name"):
+				if (t.find_all("email_addr") != []):
+					ename = (t("wos_standard"))[0].string.upper().replace(", ",",")
+					eemail = (t("email_addr"))[0].string
+					email_list.append({'name': trim_name(ename), 'email': eemail, 'date': date_published})
+		
+			for t in x.find_all("reprint_contact"):
+				if t("wos_standard") != []:
+					lname = trim_name((t("wos_standard"))[0].string.upper().replace(", ",","))
+					if t("city") == []:
+						lcity = ""
+					else:
+						lcity = (t("city"))[0].string
+					if t("state") == []:
+						lstate = ""
+					else:
+						lstate = (t("state"))[0].string
+					if t("country") == []:
+							lcountry = ""
+					else:
+						lcountry = (t("country"))[0].string
+					if lcity == "" and lstate == "" and lcountry == "":
+						continue
+					location_list.append({'name': lname, 'city': lcity.upper(), 'state': lstate.upper(), 'country': lcountry.upper(), 'date': date_published})
 
 		#citedReferences is called from query
 		for y in citing_result.optionValue[0].value:
@@ -356,6 +371,7 @@ def main(argv):
 	total_list = []
 	total_location_list = []
 	total_email_list = []
+	searched_author = []
 	
 	if len(argv) < 2:
 		print "Sample Usage: creativity inputAuthor inputSettingFileName ?outputFileName1 ?outputFileName2"
@@ -407,6 +423,7 @@ def main(argv):
 	
 	while True:	
 		authorName = authorNames.popleft()
+		searched_author.append(authorName)
 
 		#instance of Query created
 		query = Query(authentication.SID)
@@ -497,6 +514,7 @@ def main(argv):
 	AuthorWork.create_table(fail_silently=True)
 	Address.create_table(fail_silently=True)
 	Cocitation.create_table(fail_silently=True)
+	Queries.create_table(fail_silently=True)
 	
 	#store author, work, author-work relationship and cocitation information
 	for x in total_list:
@@ -545,21 +563,32 @@ def main(argv):
 	
 	for x in total_location_list:
 		try:
-			Address.get(Address.author==Author.get(Author.name==x['name']), Address.city==x['city'], Address.state==x['state'], Address.country==x['country'])
+			Address.get(Address.author==Author.get(Author.name==x['name']), Address.city==x['city'], Address.state==x['state'], Address.country==x['country'], Address.date==x['date'])
 		except Address.DoesNotExist:
-			Address.create(author=Author.get(Author.name==x['name']), city=x['city'], state=x['state'], country=x['country'])
+			Address.create(author=Author.get(Author.name==x['name']), city=x['city'], state=x['state'], country=x['country'], date=x['date'])
 		except Author.DoesNotExist:
 			curr_author = Author.create(name=x['name'], num_of_work=num_of_work(query, x['name'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
-			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'])
+			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'], date=x['date'])
 	
 	for x in total_email_list:
 		try:
-			Email.get(Email.author==Author.get(Author.name==x['name']), Email.email==x['email'])
+			Email.get(Email.author==Author.get(Author.name==x['name']), Email.email==x['email'], Email.date==x['date'])
 		except Email.DoesNotExist:
-			Email.create(author=Author.get(Author.name==x['name']), email=x['email'])
+			Email.create(author=Author.get(Author.name==x['name']), email=x['email'], date=x['date'])
 		except Author.DoesNotExist:
 			curr_author = Author.create(name=x['name'], num_of_work=num_of_work(query, x['name'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
-			Email.create(author=curr_author, email=x['email'])
+			Email.create(author=curr_author, email=x['email'], date=x['date'])
+
+	for x in searched_author:
+		try:
+			Queries.get(Queries.author == x, Queries.start == datetime.strptime(timeSpan['begin'],"%Y-%m-%d").date(), Queries.end == datetime.strptime(timeSpan['end'],"%Y-%m-%d").date(), Queries.num_of_search == count_search, Queries.num_of_citing == count_ca, Queries.num_of_cited == count_cr)
+		except Queries.DoesNotExist:
+			Queries.create(author = x, start = datetime.strptime(timeSpan['begin'],"%Y-%m-%d").date(), end = datetime.strptime(timeSpan['end'],"%Y-%m-%d").date(), num_of_search = count_search, num_of_citing = count_ca, num_of_cited = count_cr)
+			
+
+	#instance of Authenticate created and authenticateSession is called
+	authentication = Authenticate()
+			
 			
 	#database connection closed
 	database.close()
