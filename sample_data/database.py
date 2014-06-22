@@ -97,13 +97,13 @@ class Queries(BaseModel):
 def print_cocitation():
 	AW1 = AuthorWork.alias()
 	AW2 = AuthorWork.alias()
-#	for x in Cocitation.select().group_by(Cocitation.inputRelationship.author.id,Cocitation.citedRelationship.author.id):
-#		try:
-#			inW = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
-#			outW = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
-#			print "\"{0}\",\"{1}\",\"{2}\"".format(inW.author.id, outW.author.id, x.count)
-#		except Author.DoesNotExist:
-#			x.delete_instance()
+	for x in Cocitation.select(Cocitation.inputRelationship,Cocitation.citedRelationship,fn.Count(Cocitation.id).alias('countA')).join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).switch(Cocitation).group_by(AW2.author,AW1.author).order_by(fn.Count(Cocitation.id).desc()):
+		try:
+			inputR = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
+			outputR = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
+			print "\"{0}\",\"{1}\",\"{2}\"".format(inputR.author.id,outputR.author.id, x.countA)
+		except Author.DoesNotExist:
+			continue
 
 def print_author():
 	for x in Author.select():
@@ -150,6 +150,7 @@ def main():
 			print x.id
 		if bb.work.id == x.citingWork.id:
 			print x.id
+
 	print "DONE"
 	
 	#database connection closed

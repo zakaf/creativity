@@ -1,0 +1,7 @@
+output1
+"first_author_id","second_author_id","number_of_cocitation_together"
+
+output2
+"author_id","author_name","number_of_work_published","email","city","state","country"
+
+*note that email, city, state and country might be empty
