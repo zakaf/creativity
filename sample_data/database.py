@@ -94,11 +94,38 @@ class Queries(BaseModel):
 	num_of_citing = IntegerField()
 	num_of_cited = IntegerField()
 
+def print_cocitation():
+	AW1 = AuthorWork.alias()
+	AW2 = AuthorWork.alias()
+#	for x in Cocitation.select().group_by(Cocitation.inputRelationship.author.id,Cocitation.citedRelationship.author.id):
+#		try:
+#			inW = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
+#			outW = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
+#			print "\"{0}\",\"{1}\",\"{2}\"".format(inW.author.id, outW.author.id, x.count)
+#		except Author.DoesNotExist:
+#			x.delete_instance()
+
+def print_author():
+	for x in Author.select():
+		p_email = ""
+		p_city = ""
+		p_state = ""
+		p_country = ""
+		for y in Email.select().where(Email.author == x).order_by(Email.date.desc()):
+			p_email = y.email
+			break
+		for y in Address.select().where(Address.author == x).order_by(Address.date.desc()):
+			p_city = y.city
+			p_state = y.state
+			p_country = y.country
+			break
+		print "\"{0}\",\"{1}\",\"{2}\",\"{3}\",\"{4}\",\"{5}\",\"{6}\"".format(x.id,x.name.encode('utf-8'),x.num_of_work,p_email,p_city.encode('utf-8'),p_state.encode('utf-8'),p_country.encode('utf-8'))
+			
+
 #--------------------
 #MAIN STARTS HERE
 def main():
 
-	t0 = time.time()
 	#database connection
 	database.connect()
 
@@ -109,60 +136,24 @@ def main():
 	Address.create_table(fail_silently=True)
 	Cocitation.create_table(fail_silently=True)
 	
-	#print "--Authors--"
-	#for x in Author.select():
-	#	print x.name,x.num_of_work
-#	for x in Work.select():
-#		print x.title
-#	for x in AuthorWork.select():
-#		print x.author.name,x.work.title
-#	for x in Cocitation.select():
-#		print "---cocitation--"
-#		print x.inputRelationship.author.name,x.inputRelationship.work.title
-#		print x.citingWork.title
-#		print x.citedRelationship.author.name,x.citedRelationship.work.title
-#	for x in Address.select():
-#		print x.author.name,x.city,x.state,x.country
-	print "-------------------------"
-#	for x in Author.get(Author.name == "KAY,SR").cocitation_with():
-#		print x.inputRelationship.author.name, x.citedRelationship.author.name
-#	print "Number of Cocitation Bilder,R is involved with"
-#	print Author.get(Author.name == "BILDER,R").count_cocitation_with()
-	#for x in Author.get(Author.name == "KAY,SR").cocitation_together(Author.get(Author.name == "KANE,J")):
-	#	print x.inputRelationship.author.name, x.citedRelationship.author.name
-#	print "Number of cocitation KAY,SR and KANE,J is involved with together"
-#	print Author.get(Author.name == "KAY,S").count_cocitation_together(Author.get(Author.name == "KANE,J"))
+	print_cocitation()
+	print "---------"
+	print_author()
+
+	print "----ERROR CHECK----"
+	for x in Cocitation.select():
+		aa = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
+		bb = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
+		if aa.work.id == bb.work.id:
+			print x.id
+		if aa.work.id == x.citingWork.id:
+			print x.id
+		if bb.work.id == x.citingWork.id:
+			print x.id
+	print "DONE"
 	
-	#for x in Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").cocitation_referenced():
-	#	print "input: ", x.inputRelationship.work.title
-	#	print "citing: ",x.citingWork.title
-	#	print "output: ", x.citedRelationship.work.title
-	#	print "--------"
-#	print "Number of cocitation that NEUROCOGNITIVE ... ARE WE MEASURING THE \"RIGHT STUFF\"? is involed with as a input or output work"
-#	print Work.get(Work.title == "NEUROCOGNITIVE DEFICITS AND FUNCTIONAL OUTCOME IN SCHIZOPHRENIA: ARE WE MEASURING THE \"RIGHT STUFF\"?").count_cocitation_referenced()
-
-	#print "Email of Bilder,R"
-	#for x in Author.get(Author.name == "BILDER,R").email_of_author():
-	#	print x.email
-	print "--All email--"
-	for x in Email.select():
-		print x.email, x.date
-
-	print "---All Address---"
-	for x in Address.select():
-		print x.city, x.state, x.country, x.date
-
-	print "---All Queries---"
-	for x in Queries.select():
-		print x.author, x.start, x.end, x.num_of_search, x.num_of_citing, x.num_of_cited
-
 	#database connection closed
 	database.close()
-	
-	t1 = time.time()
-	print "---------TIME----------"
-	print "Calculation time"
-	print t1-t0
 
 if __name__ == "__main__":
 	main()

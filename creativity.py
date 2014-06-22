@@ -115,26 +115,29 @@ class Query (object):
 		self.client = Client(queryUrl)
 		self.client.set_options(headers={'Cookie':"SID=\""+str(SID)+"\""})
 	def search (self, queryParameters, retrieveParameters):
-		time.sleep(0.5)
+		#time.sleep(0.5)
 		try:
 			result = self.client.service.search(queryParameters,retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
+			return self.search(queryParameters, retrieveParameters)
 	def citingArticles (self, databaseId, uid, editions, timeSpan, language, retrieveParameters):
-		time.sleep(0.5)
+		#time.sleep(0.5)
 		try:
 			result = self.client.service.citingArticles( databaseId, uid, editions, timeSpan, language, retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
+			return self.citingArticles (databaseId, uid, editions, timeSpan, language, retrieveParameters)
 	def citedReferences (self, databaseId, uid, language, retrieveParameters):
-		time.sleep(0.5)
+		#time.sleep(0.5)
 		try:
 			result = self.client.service.citedReferences(databaseId,uid,language,retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
+			return self.citedReferences (databaseId, uid, language, retrieveParameters)
 
 
 #Given input author, who is cocited with him
@@ -147,6 +150,7 @@ def cocitation_with (	query, 		#queryClient
 						count_ca, 	#max num of work that cites work by input to be considered
 						count_cr):	#max num of author that is cocited with input to be considered
 									# count_** is maximum value, because repetition is usual
+	progress = 0
 	pair_list = []
 	location_list = []
 	email_list = []
@@ -262,6 +266,8 @@ def cocitation_with (	query, 		#queryClient
 				continue
 		
 			for z in cited_result.references:
+				progress = progress + 1
+				update_progress(progress/(float(count_s)*float(count_ca)*float(count_cr)))
 				try:
 					author1_trimmed = authorName.upper()
 					author2_trimmed = trim_name(z.citedAuthor.upper().replace(", ",","))
@@ -353,7 +359,25 @@ def trim_name(name):
 	if comma_location == -1:
 		return name
 	return name[:(comma_location+2)]
-		
+
+def update_progress(progress):
+    barLength = 20 # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done...\r\n"
+    block = int(round(barLength*progress))
+    text = "\rPercent: [{0}] {1}% {2}".format( "="*block + " "*(barLength-block), progress*100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 #--------------------
 #MAIN STARTS HERE
@@ -421,6 +445,8 @@ def main(argv):
 	authentication = Authenticate()
 	authentication.authenticateSession()
 	
+	num_authors = 0	
+
 	while True:	
 		authorName = authorNames.popleft()
 		searched_author.append(authorName)
@@ -430,7 +456,9 @@ def main(argv):
 		
 		#explanation of arguments are done in the actual function itself
 		pair_list,location_list,email_list = cocitation_with(query, authorName, sTimeSpan, timeSpan, language, count_search, count_ca, count_cr)
-		
+		num_authors = num_authors + 1
+		print "Completed", num_authors, "out of", numAuthor
+
 		#complete list of co-citation and location
 		total_list = total_list + pair_list
 		total_location_list = total_location_list + location_list
@@ -470,9 +498,6 @@ def main(argv):
 		if len(doneNames) == numAuthor:
 			break
 
-
-	t0 = time.time()
-
 	#duplicate removal needed based on the reference		
 	total_list = duplicate_reference(total_list)
 	#counting the number of co-citation for the final statistics
@@ -487,6 +512,7 @@ def main(argv):
 		kcount = kcount + k['count']
 	
 	print "Total Number of Co-citations Recorded: " + str(kcount)
+	print "--------------"
 	alc = Counter(authorList)
 	alc_sorted = sorted(alc.items(),key=lambda(k,v):(-v,k))
 
@@ -502,8 +528,6 @@ def main(argv):
 			for row in total_list:
 				writer1.writerow([row['input'],row['output'],str(row['count'])])
 
-	t1 = time.time()
-
 	#database connection
 	database.connect()
 
@@ -517,16 +541,20 @@ def main(argv):
 	Queries.create_table(fail_silently=True)
 	
 	#store author, work, author-work relationship and cocitation information
+	print "Processing Cocitation"
+	progress = 0
 	for x in total_list:
+		progress = progress + 1
+		update_progress(progress/float(len(total_list)))
 		#store author information
 		try:
 			Author.get(Author.name==x['input'])
 		except Author.DoesNotExist:
-			Author.create(name=x['input'], num_of_work=num_of_work(query, x['input'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
+			Author.create(name=x['input'])
 		try:
 			Author.get(Author.name==x['output'])
 		except Author.DoesNotExist:
-			Author.create(name=x['output'], num_of_work=num_of_work(query, x['output'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
+			Author.create(name=x['output'])
 		#store work information
 		for y in x['reference']:
 			try:
@@ -561,22 +589,32 @@ def main(argv):
 			except Cocitation.DoesNotExist:
 				Cocitation.create(	inputRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['input']), AuthorWork.work==Work.get(Work.title==y['inputWork'])), citingWork=Work.get(Work.title==y['citingWork']), citedRelationship=AuthorWork.get(AuthorWork.author==Author.get(Author.name==x['output']), AuthorWork.work==Work.get(Work.title==y['outputWork'])))
 	
+	print "Processing Location"
+	progress = 0
+	
 	for x in total_location_list:
+		progress = progress + 1
+		update_progress(progress/float(len(total_location_list)))
 		try:
 			Address.get(Address.author==Author.get(Author.name==x['name']), Address.city==x['city'], Address.state==x['state'], Address.country==x['country'], Address.date==x['date'])
 		except Address.DoesNotExist:
 			Address.create(author=Author.get(Author.name==x['name']), city=x['city'], state=x['state'], country=x['country'], date=x['date'])
 		except Author.DoesNotExist:
-			curr_author = Author.create(name=x['name'], num_of_work=num_of_work(query, x['name'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
+			curr_author = Author.create(name=x['name'])
 			Address.create(author=curr_author, city=x['city'], state=x['state'], country=x['country'], date=x['date'])
 	
+	print "Processing Email"
+	progress = 0
+
 	for x in total_email_list:
+		progress = progress + 1
+		update_progress(progress/float(len(total_email_list)))
 		try:
 			Email.get(Email.author==Author.get(Author.name==x['name']), Email.email==x['email'], Email.date==x['date'])
 		except Email.DoesNotExist:
 			Email.create(author=Author.get(Author.name==x['name']), email=x['email'], date=x['date'])
 		except Author.DoesNotExist:
-			curr_author = Author.create(name=x['name'], num_of_work=num_of_work(query, x['name'], sTimeSpan, timeSpan, language, count_search, count_ca, count_cr))
+			curr_author = Author.create(name=x['name'])
 			Email.create(author=curr_author, email=x['email'], date=x['date'])
 
 	for x in searched_author:
@@ -586,23 +624,11 @@ def main(argv):
 			Queries.create(author = x, start = datetime.strptime(timeSpan['begin'],"%Y-%m-%d").date(), end = datetime.strptime(timeSpan['end'],"%Y-%m-%d").date(), num_of_search = count_search, num_of_citing = count_ca, num_of_cited = count_cr)
 			
 
-	#instance of Authenticate created and authenticateSession is called
-	authentication = Authenticate()
-			
-			
 	#database connection closed
 	database.close()
 
 	#closing session before program exits
 	authentication.closeSession()
 
-	t2 = time.time()
-	# measures time for performance measure
-	print "---------TIME----------"
-	print "Calculation time"
-	print t1-t0
-	print "Database time (Including number of work query search time)"
-	print t2-t1
-	
 if __name__ == "__main__":
 	main(sys.argv[1:])
