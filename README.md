@@ -23,27 +23,25 @@ BeautifulSoup4 - python library for XML/HTML
 Peewee - database orm for python
 * In order to ues peewee, <code>pip install peewee</code>
 
-For ease of use, create a command, "creativity", that will run creativity.py
-* To make this command available to all users:
-
-    <code>sudo ln -s $PWD/creativity.py /usr/local/bin/creativity</code>
-
-* To make this command available only to current user (if you have ~/bin in your path):
-
-    <code>ln -s $PWD/creativity.py ~/bin/creativity</code>
-
 How to Use
 -----------
 Command should look like the following:
 
 1) If you want to update the database and see the current query result
-*	<code> creativity inputAuthor intputFileName outputFileName1 outputFileName2</code>
-*	ex) <code> creativity Bilder,R sampleinputfile output1 output2</code>
+*	<code> ./creativity.py inputAuthor intputFileName outputFileName1 outputFileName2</code>
+*	ex) <code> ./creativity.py Bilder,R sampleinputfile output1 output2</code>
 *	.csv extension will be automatically added by the program for the outputFileNames
 
 2) If you just want to update the database
-*	<code> creativity inputAuthor intputFileName</code>
-*	ex) <code> creativity Bilder,R sampleinputfile</code>
+*	<code> ./creativity inputAuthor intputFileName</code>
+*	ex) <code> ./creativity Bilder,R sampleinputfile</code>
+
+3) To update the number of publication each author has published
+*	<code> ./fillup.py
+
+4) To create the output files from database
+*	<code> ./sample_data/database.py
+*	This prints cocitation information and author information
 
 Input file should look like the below with values changed:
 (For your reference, this repository has a sample file)
@@ -183,15 +181,14 @@ June 20, 2014
 * location and email now includes date information,so that the latest one can be tracked
 * Queries that have been searched are now saved into a database
 
+June 21 ~ 22, 2014
+* Finalized all the functionalities
+* Updated sample output file
+
 Known/Possible Bugs
 ----------
-* (temporaily fixed, needs testing) When the request is blocked, becuase the program have requested too many queries within certain time frame, error returned by the server is not getting caught by try-except. It just says WebFault not defined. (request is only blocked for at most 5 minutes, so try after 5 mins and you will be fine)
 * (Possible) There have been few irregularity in returned data, so there might be error arising due to a lack of debugging. So if there is an error with certain input data, please report it to me through email or github with the input that you've had the program run with
 * (Is this necessary to be fixed?) not all authors are going to have address and email address
-
-Future Goal
-----------
-* Domain of the work?
 
 Contact
 ----------
