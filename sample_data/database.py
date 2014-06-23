@@ -136,6 +136,8 @@ def main():
 	Address.create_table(fail_silently=True)
 	Cocitation.create_table(fail_silently=True)
 	
+	#for x in Queries.select():
+	#	print x.author, x.start,x.end,x.num_of_search,x.num_of_citing,x.num_of_cited
 	print_cocitation()
 	print "---------"
 	print_author()
@@ -144,13 +146,20 @@ def main():
 	for x in Cocitation.select():
 		aa = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
 		bb = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
-		if aa.work.id == bb.work.id:
-			print x.id
-		if aa.work.id == x.citingWork.id:
-			print x.id
-		if bb.work.id == x.citingWork.id:
-			print x.id
-
+		try:
+			aaa = aa.author.id
+		except Author.DoesNotExist:
+			print "input",x.id
+			continue
+		try:
+			bbb = bb.author.id
+		except Author.DoesNotExist:
+			print "cited",x.id
+			continue
+		if aa.author.id == bb.author.id:
+			print "in & out",x.id
+			print Author.get(Author.id == aa.author.id).title
+			print Author.get(Author.id == bb.author.id).title
 	print "DONE"
 	
 	#database connection closed

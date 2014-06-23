@@ -1,4 +1,4 @@
-Creativity Web Project Using Web of Science (under development)
+Creativity Web Project Using Web of Science (under testing)
 ==========
 
 Creativity Web targets to investigate a network of creative scientists in different areas under the supervision of Dr. Robert M. Bilder and Kendra Knudsen
@@ -184,6 +184,10 @@ June 20, 2014
 June 21 ~ 22, 2014
 * Finalized all the functionalities
 * Updated sample output file
+
+June 23, 2014
+* Finalized the program to remove insignificant data
+* Updated biology output
 
 Known/Possible Bugs
 ----------

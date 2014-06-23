@@ -115,29 +115,12 @@ class Query (object):
 		self.client = Client(queryUrl)
 		self.client.set_options(headers={'Cookie':"SID=\""+str(SID)+"\""})
 	def search (self, queryParameters, retrieveParameters):
-		#time.sleep(0.5)
 		try:
 			result = self.client.service.search(queryParameters,retrieveParameters)
 			return result
 		except suds.WebFault, e:
 			print e
 			return self.search(queryParameters,retrieveParameters)
-	def citingArticles (self, databaseId, uid, editions, timeSpan, language, retrieveParameters):
-		#time.sleep(0.5)
-		try:
-			result = self.client.service.citingArticles( databaseId, uid, editions, timeSpan, language, retrieveParameters)
-			return result
-		except suds.WebFault, e:
-			print e
-			return self.citingArticles( databaseId, uid, editions, timeSpan, language, retrieveParameters)
-	def citedReferences (self, databaseId, uid, language, retrieveParameters):
-		#time.sleep(0.5)
-		try:
-			result = self.client.service.citedReferences(databaseId,uid,language,retrieveParameters)
-			return result
-		except suds.WebFault, e:
-			print e
-			return self.citedReferences(databaseId,uid,language,retrieveParameters)
 
 #return number of work an author has published
 def num_of_work (query, authorName, symbolicTimeSpan, timeSpan, language):
@@ -178,7 +161,6 @@ def update_progress(progress):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-
 #--------------------
 #MAIN STARTS HERE
 def main(argv):
@@ -206,20 +188,45 @@ def main(argv):
 	
 	#store author, work, author-work relationship and cocitation information
 	author_count = 0
-	total_count = 0
-	for x in Author.select().where(Author.num_of_work == 0):
-		total_count = total_count + 1
+	total_count = Author.select().where(Author.num_of_work == 0).count()
+
 	print "Processing",total_count,"authors"
 	for x in Author.select().where(Author.num_of_work == 0):
+		author_count = author_count + 1
+		update_progress(author_count/float(total_count))
 		if x.name.find(",") == -1:
 			x.delete_instance()
 			continue
-		author_count = author_count + 1
-		update_progress(author_count/float(total_count))
 		#store author information
 		number = num_of_work(query,x.name,sTimeSpan,timeSpan,language)
 		x.num_of_work = number
 		x.save()
+
+	if total_count == Author.select().where(Author.num_of_work == 0).count():
+		Author.delete().where(Author.num_of_work == 0).execute()
+
+	print "Processing AuthorWork"
+	author_count = 0
+	total_count = AuthorWork.select().count()
+	for x in AuthorWork.select():
+		author_count = author_count + 1
+		update_progress(author_count/float(total_count))
+		try:
+			aa = Author.get(Author.id == x.author.id)
+		except Author.DoesNotExist:
+			x.delete_instance()
+	print author_count,total_count
+	print "Processing Cocitations"
+	author_count = 0
+	total_count = Cocitation.select().count()
+	for x in Cocitation.select():
+		author_count = author_count + 1
+		update_progress(author_count/float(total_count))
+		try:
+			aa = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
+			bb = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
+		except AuthorWork.DoesNotExist:
+			x.delete_instance()
 
 	#database connection closed
 	database.close()

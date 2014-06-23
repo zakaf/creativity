@@ -271,8 +271,8 @@ def cocitation_with (	query, 		#queryClient
 				try:
 					author1_trimmed = authorName.upper()
 					author2_trimmed = trim_name(z.citedAuthor.upper().replace(", ",","))
-					#if inputWork and outputWork is the same, skip
-					if cmp(unicode(x_title).encode('utf-8').upper(),z.citedTitle.upper()) == 0:
+					#if inputAuthor and outputAuthor is the same, skip
+					if cmp(author1_trimmed,author2_trimmed) == 0:
 						continue
 					#first author should be alphabetically before the second author
 					elif cmp(author1_trimmed, author2_trimmed) < 0:
