@@ -203,6 +203,7 @@ def main(argv):
 		x.save()
 
 	if total_count == Author.select().where(Author.num_of_work == 0).count():
+		print "Deleting insignificant authors"
 		Author.delete().where(Author.num_of_work == 0).execute()
 
 	print "Processing AuthorWork"
