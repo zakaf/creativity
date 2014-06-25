@@ -93,101 +93,18 @@ Format and possible values:
 
 Function
 ----------
-* With a given input author, the program will output a list of two authors who have been co-cited and the number of unique co-citations they received in the first file.
+* With a given input author, the creativity will output a list of two authors who have been co-cited and the number of unique co-citations they received in the first file.
+* The number of co-citation that each author is involved with is returned in the second file
 * Users can personalize the co-citation search through input settings file
 *    - Number of maximum co-citation from each author
 *    - NUmber of authors to recusively search co-citation for
 *    - Different edition and collection of Web of Science
 *    - Different time frame to choose from
-* All duplicates are removed from the output, so only unique co-citations are considered
-* The number of co-citation that each author is involved with is returned in the second file
 * The output is in csv file, so the output is platform independent and easily readable.
 * Query results are saved into a local database allowing for future use of the data
 * Local database allows retrieval operations including, but not limited to who the author has cocited with
-
-Progress
-----------
-Feb 14, 2014
-* SOAP library called, 'SUDS' is used
-* Started to use web of science api using soap approach
-* Got authentication and closeSession to work
-
-Feb 18, 2014
-* Attached session id to the header of search request
-* Input parameters for search request has been made
-* search request can now be made, but response has to be formatted
-* First search returns the single work with the most number of citations (currently author hardcoded as Chomczynski, P)
-* citingArticels receive input from previous search result and returns 5 works that cited the work returned by previous function
-* made code cleaner and more objected-oriented like by creating 'Authenticate' and 'Query' class.
-* as of now, program prints session id, most highly cited work of Chomczynski, P, 5 most highly cited works that cites the previous work of Chomczynski, P
-
-Feb 19, 2014
-* co-cited authors can be returned
-* input author can be returned, so i've removed tuples with same input and output author
-* different arguments for cocitation with function have been documented
-* program will output co-cited authors with input author
-* Feb 14, 2014 ~ Feb 19, 2014 GOAL DONE
-
-Feb 25, 2014
-* now input author is not hard coded and accepts it as an arugment
-* settings is not hard coded and the file name of the settings file is accepted as an argument
-* the sample settings file is described above as well as how command should look like
-
-March 30, 2014
-* Possible Graphical Representation library is being reviewed.
-* Error caused by a return with unknown citedAuthor is fixed 
-* Repeated co-citation is now removed, instead the output now shows the count of the same co-citation next to the input and the output author
-
-March 31, 2014
-* The return will be sorted by the number of co-citation (high to low) then the alphabetical order.
-* The program saves an information about how two authors are related (which works of them and others make them co-cited)
-* The return is saved into a csv file
-
-April 3, 2014
-* Recursive author co-citation search has been implemented
-* There is a need for the program to remove duplicate and co-citation from the same paper
-* Removing co-citation from the same paper has been implemented, but not fully debugged due to internet disconnection
-* After reference duplicate removal is implemented, there is a need for large sample debugging
-
-April 4, 2014 ~ April 5, 2014
-* Reference duplicate (two or more same co-citation getting counted more than once) is now removed, when counting co-citation.
-* Program functionality is somewhat complete, but details have to be checked out.
-* Number of co-citation that each author is involved with is printed out in the second file
-
-April 6, 2014
-* All the csv output is in UTF-8 to prevent any error rising from unicode to ascii conversion. (due to authors with their name written in their native language, not in english alphabet)
-
-May 12, 2014
-* Location data is collected from Web of Science and they are saved to a list
-* Database implementation has started
-
-May 13, 2014
-* Everything is correctly imported into sqlite database from query (author, work, authorWork, Cocitation, Address)
-* tables are relatively simple, but storing more information is a piece of cake
-
-May 15, 2014
-* database now allows retrieval operations
-* database macro operations have been added (cocitation_with, count_cocitation_with, cocitation_together, count_cocitation_together)
-
-June 18, 2014
-* different formats of names are now formatted to last_name,first_name_initial ex) BILDER,R
-* email is retrieved and saved into the database
-
-June 19, 2014
-* number of work that each author published in given time frame is stored
-* collection and editions are now set to be the entire WOS, not just SCI
-
-June 20, 2014
-* location and email now includes date information,so that the latest one can be tracked
-* Queries that have been searched are now saved into a database
-
-June 21 ~ 22, 2014
-* Finalized all the functionalities
-* Updated sample output file
-
-June 23, 2014
-* Finalized the program to remove insignificant data
-* Updated biology output
+* fillup fills up the number of publications each author has published in a given time frame.
+* database prints the cocitation and author information that is currently stored in the database
 
 Known/Possible Bugs
 ----------
@@ -198,5 +115,3 @@ Contact
 ----------
 * For bugs or feature requests please create a [creativity github issue](https://github.com/ldkz2524/creativity/issues).
 * Contact Dongkeun Lee (ldkz2524@ucla.edu)
-
-
