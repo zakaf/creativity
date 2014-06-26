@@ -194,6 +194,9 @@ def main(argv):
 	for x in Author.select().where(Author.num_of_work == 0):
 		author_count = author_count + 1
 		update_progress(author_count/float(total_count))
+		#if x.name.find("NEAR,J") != -1:
+		#	x.delete_instance()
+		#	continue
 		if x.name.find(",") == -1:
 			x.delete_instance()
 			continue

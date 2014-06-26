@@ -1,4 +1,4 @@
-Creativity Web Project Using Web of Science (under testing)
+Creativity Web Project Using Web of Science
 ==========
 
 Creativity Web targets to investigate a network of creative scientists in different areas under the supervision of Dr. Robert M. Bilder and Kendra Knudsen
