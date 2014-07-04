@@ -24,43 +24,42 @@
 from peewee import *
 import time
 
-#DATABASE = 'database_creativity.db'
-DATABASE = 'merged_database.db'
+DATABASE = 'database_creativity.db'
 database = SqliteDatabase(DATABASE)
 #model defintion of database
-class BaseModel2(Model):
+class BaseModel(Model):
 	class Meta:
 		database = database
 
-class Author2(BaseModel2):
+class Author(BaseModel):
 	name = CharField()
 	num_of_work = IntegerField(default=0)
 
-class Email2(BaseModel2):
-	author = ForeignKeyField(Author2, related_name='authorEmail2')
+class Email(BaseModel):
+	author = ForeignKeyField(Author, related_name='authorEmail')
 	email = CharField()
 	date = DateField()
 	
-class Work2(BaseModel2):
+class Work(BaseModel):
 	title = CharField()
 
-class AuthorWork2(BaseModel2):
-	author = ForeignKeyField(Author2, related_name='authorWork2')
-	work = ForeignKeyField(Work2, related_name='authorWork2')
+class AuthorWork(BaseModel):
+	author = ForeignKeyField(Author, related_name='authorWork')
+	work = ForeignKeyField(Work, related_name='authorWork')
 
-class Address2(BaseModel2):
-	author = ForeignKeyField(Author2, related_name='authorAddress2')
+class Address(BaseModel):
+	author = ForeignKeyField(Author, related_name='authorAddress')
 	city = CharField()
 	state = CharField()
 	country = CharField()
 	date = DateField()
 
-class Cocitation2(BaseModel2):
-	inputRelationship = ForeignKeyField(AuthorWork2, related_name='inputRelationship2')
-	citingWork = ForeignKeyField(Work2, related_name='citingWork2')
-	citedRelationship = ForeignKeyField(AuthorWork2, related_name='citedRelationship2')
+class Cocitation(BaseModel):
+	inputRelationship = ForeignKeyField(AuthorWork, related_name='inputRelationship')
+	citingWork = ForeignKeyField(Work, related_name='citingWork')
+	citedRelationship = ForeignKeyField(AuthorWork, related_name='citedRelationship')
 
-class Queries2(BaseModel2):
+class Queries(BaseModel):
 	author = CharField()
 	start = DateField()
 	end = DateField()
@@ -69,26 +68,26 @@ class Queries2(BaseModel2):
 	num_of_cited = IntegerField()
 
 def print_cocitation():
-	AW1 = AuthorWork2.alias()
-	AW2 = AuthorWork2.alias()
-	for x in Cocitation2.select(Cocitation2.inputRelationship,Cocitation2.citedRelationship,fn.Count(Cocitation2.id).alias('countA')).join(AW1, on=(Cocitation2.inputRelationship == AW1.id)).switch(Cocitation2).join(AW2,on=(Cocitation2.citedRelationship == AW2.id)).switch(Cocitation2).group_by(AW2.author,AW1.author).order_by(fn.Count(Cocitation2.id).desc()):
+	AW1 = AuthorWork.alias()
+	AW2 = AuthorWork.alias()
+	for x in Cocitation.select(Cocitation.inputRelationship,Cocitation.citedRelationship,fn.Count(Cocitation.id).alias('countA')).join(AW1, on=(Cocitation.inputRelationship == AW1.id)).switch(Cocitation).join(AW2,on=(Cocitation.citedRelationship == AW2.id)).switch(Cocitation).group_by(AW2.author,AW1.author).order_by(fn.Count(Cocitation.id).desc()):
 		try:
-			inputR = AuthorWork2.get(AuthorWork2.id == x.inputRelationship.id)
-			outputR = AuthorWork2.get(AuthorWork2.id == x.citedRelationship.id)
+			inputR = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
+			outputR = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
 			print "\"{0}\",\"{1}\",\"{2}\"".format(inputR.author.id,outputR.author.id, x.countA)
-		except Author2.DoesNotExist:
+		except Author.DoesNotExist:
 			continue
 
 def print_author():
-	for x in Author2.select():
+	for x in Author.select():
 		p_email = ""
 		p_city = ""
 		p_state = ""
 		p_country = ""
-		for y in Email2.select().where(Email2.author == x).order_by(Email2.date.desc()):
+		for y in Email.select().where(Email.author == x).order_by(Email.date.desc()):
 			p_email = y.email
 			break
-		for y in Address2.select().where(Address2.author == x).order_by(Address2.date.desc()):
+		for y in Address.select().where(Address.author == x).order_by(Address.date.desc()):
 			p_city = y.city
 			p_state = y.state
 			p_country = y.country
@@ -110,23 +109,23 @@ def main():
 	print_author()
 
 	print "----ERROR CHECK----"
-	for x in Cocitation2.select():
-		aa = AuthorWork2.get(AuthorWork2.id == x.inputRelationship.id)
-		bb = AuthorWork2.get(AuthorWork2.id == x.citedRelationship.id)
+	for x in Cocitation.select():
+		aa = AuthorWork.get(AuthorWork.id == x.inputRelationship.id)
+		bb = AuthorWork.get(AuthorWork.id == x.citedRelationship.id)
 		try:
 			aaa = aa.author.id
-		except Author2.DoesNotExist:
+		except Author.DoesNotExist:
 			print "input",x.id
 			continue
 		try:
 			bbb = bb.author.id
-		except Author2.DoesNotExist:
+		except Author.DoesNotExist:
 			print "cited",x.id
 			continue
 		if aa.author.id == bb.author.id:
 			print "in & out",x.id
-			print Author2.get(Author2.id == aa.author.id).title
-			print Author2.get(Author2.id == bb.author.id).title
+			print Author.get(Author.id == aa.author.id).title
+			print Author.get(Author.id == bb.author.id).title
 	print "DONE"
 	
 	#database connection closed

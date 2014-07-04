@@ -154,7 +154,8 @@ def cocitation_with (	query, 		#queryClient
 	pair_list = []
 	location_list = []
 	email_list = []
-	userQuery = 'AU='+authorName
+	userQuery = 'AU='+authorName+' AND WC=Economics'
+	#userQuery = 'AU='+authorName
 	fRecord = 1;
 	sortField = { 'name':'TC', 'sort':'D'}
 	option = { 'key':'RecordIDs', 'value':'On',}

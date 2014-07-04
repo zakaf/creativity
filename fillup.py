@@ -124,7 +124,7 @@ class Query (object):
 
 #return number of work an author has published
 def num_of_work (query, authorName, symbolicTimeSpan, timeSpan, language):
-	userQuery = 'AU='+authorName
+	userQuery = 'AU='+authorName+' AND WC=Economics'
 	fRecord = 1;
 	sortField = { 'name':'TC', 'sort':'D'}
 	option = { 'key':'RecordIDs', 'value':'On',}
